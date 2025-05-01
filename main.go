@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/friedelschoen/dwm-status/format"
+	"github.com/friedelschoen/st8/format"
 	"github.com/spf13/pflag"
 )
 

@@ -1,4 +1,4 @@
-module github.com/friedelschoen/dwm-status
+module github.com/friedelschoen/st8
 
 go 1.24.2
 

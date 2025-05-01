@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/friedelschoen/dwm-status/component"
+	"github.com/friedelschoen/st8/component"
 )
 
 type ComponentCall struct {
