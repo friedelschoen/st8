@@ -5,6 +5,7 @@ go 1.24.2
 require (
 	github.com/distatus/battery v0.11.0
 	github.com/godbus/dbus/v5 v5.1.0
+	github.com/lestrrat-go/strftime v1.1.0
 	github.com/mdlayher/wifi v0.5.0
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/spf13/pflag v1.0.6

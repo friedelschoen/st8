@@ -31,7 +31,7 @@ func (n *NotificationDaemon) GetCapabilities() ([]string, *dbus.Error) {
 
 // D-Bus: GetServerInformation method
 func (n *NotificationDaemon) GetServerInformation() (name, vendor, version, specVersion string, err *dbus.Error) {
-	return "dwm-status", "friedelschoen", "0.1", "1.2", nil
+	return "st8", "friedelschoen", "0.1", "1.2", nil
 }
 
 // D-Bus: Notify method
