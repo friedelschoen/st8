@@ -1,7 +1,6 @@
 package component
 
 import (
-	"sync"
 	"time"
 
 	"github.com/friedelschoen/st8/notify"
@@ -13,15 +12,11 @@ type netstat struct {
 	time time.Time
 }
 
-var (
-	lastRx = map[string]netstat{}
-	lastTx = map[string]netstat{}
-	mu     sync.Mutex
-)
-
-func NetspeedRx(interfaceName string, _ *notify.Notification) (string, error) {
-	mu.Lock()
-	defer mu.Unlock()
+func NetspeedRx(interfaceName string, _ *notify.Notification, cacheptr *any) (string, error) {
+	var cache netstat
+	if *cacheptr != nil {
+		cache = (*cacheptr).(netstat)
+	}
 
 	stats, err := net.IOCounters(true)
 	if err != nil {
@@ -36,19 +31,20 @@ func NetspeedRx(interfaceName string, _ *notify.Notification) (string, error) {
 		}
 	}
 	now := time.Now()
-	old, ok := lastRx[interfaceName]
-	lastRx[interfaceName] = netstat{rx, now}
-	if !ok || old.recv == 0 || now.Sub(old.time).Milliseconds() == 0 {
+	*cacheptr = netstat{rx, now}
+	if cache.recv == 0 || now.Sub(cache.time).Milliseconds() == 0 {
 		return "0 B/s", nil // skip first read
 	}
-	diff := rx - old.recv
-	bps := uint64(time.Second * time.Duration(diff) / now.Sub(old.time))
+	diff := rx - cache.recv
+	bps := uint64(time.Second * time.Duration(diff) / now.Sub(cache.time))
 	return fmtHuman(bps) + "/s", nil
 }
 
-func NetspeedTx(interfaceName string, _ *notify.Notification) (string, error) {
-	mu.Lock()
-	defer mu.Unlock()
+func NetspeedTx(interfaceName string, _ *notify.Notification, cacheptr *any) (string, error) {
+	var cache netstat
+	if *cacheptr != nil {
+		cache = (*cacheptr).(netstat)
+	}
 
 	stats, err := net.IOCounters(true)
 	if err != nil {
@@ -63,12 +59,11 @@ func NetspeedTx(interfaceName string, _ *notify.Notification) (string, error) {
 		}
 	}
 	now := time.Now()
-	old, ok := lastTx[interfaceName]
-	lastTx[interfaceName] = netstat{tx, now}
-	if !ok || old.recv == 0 || now.Sub(old.time).Milliseconds() == 0 {
+	*cacheptr = netstat{tx, now}
+	if cache.recv == 0 || now.Sub(cache.time).Milliseconds() == 0 {
 		return "0 B/s", nil // skip first read
 	}
-	diff := tx - old.recv
-	bps := uint64(time.Second * time.Duration(diff) / now.Sub(old.time))
+	diff := tx - cache.recv
+	bps := uint64(time.Second * time.Duration(diff) / now.Sub(cache.time))
 	return fmtHuman(bps) + "/s", nil
 }

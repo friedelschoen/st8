@@ -7,7 +7,7 @@ import (
 	"github.com/mdlayher/wifi"
 )
 
-func WifiESSID(interfaceName string, _ *notify.Notification) (string, error) {
+func WifiESSID(interfaceName string, _ *notify.Notification, _ *any) (string, error) {
 	client, err := wifi.New()
 	if err != nil {
 		return "", fmt.Errorf("failed to open netlink: %w", err)
@@ -37,7 +37,7 @@ func WifiESSID(interfaceName string, _ *notify.Notification) (string, error) {
 	return string(bss.SSID), nil
 }
 
-func WifiPerc(interfaceName string, _ *notify.Notification) (string, error) {
+func WifiPerc(interfaceName string, _ *notify.Notification, _ *any) (string, error) {
 	client, err := wifi.New()
 	if err != nil {
 		return "", fmt.Errorf("failed to open netlink: %w", err)

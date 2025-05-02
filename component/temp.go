@@ -10,7 +10,7 @@ import (
 
 // temp reads the first temperature sensor whose sensor key contains `sensorFilter`.
 // Example input: "coretemp", "CPU", "acpitz", or "" to return the first available.
-func Temperature(name string, _ *notify.Notification) (string, error) {
+func Temperature(name string, _ *notify.Notification, _ *any) (string, error) {
 	sensors, err := host.SensorsTemperatures()
 	if err != nil {
 		return "", fmt.Errorf("unable to get temperature: %w", err)

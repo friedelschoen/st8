@@ -7,7 +7,7 @@ import (
 	"github.com/shirou/gopsutil/v3/disk"
 )
 
-func DiskFree(path string, _ *notify.Notification) (string, error) {
+func DiskFree(path string, _ *notify.Notification, _ *any) (string, error) {
 	usage, err := disk.Usage(path)
 	if err != nil {
 		return "", err
@@ -15,7 +15,7 @@ func DiskFree(path string, _ *notify.Notification) (string, error) {
 	return fmtHuman(usage.Free), nil
 }
 
-func DiskUsed(path string, _ *notify.Notification) (string, error) {
+func DiskUsed(path string, _ *notify.Notification, _ *any) (string, error) {
 	usage, err := disk.Usage(path)
 	if err != nil {
 		return "", err
@@ -23,7 +23,7 @@ func DiskUsed(path string, _ *notify.Notification) (string, error) {
 	return fmtHuman(usage.Used), nil
 }
 
-func DiskTotal(path string, _ *notify.Notification) (string, error) {
+func DiskTotal(path string, _ *notify.Notification, _ *any) (string, error) {
 	usage, err := disk.Usage(path)
 	if err != nil {
 		return "", err
@@ -31,7 +31,7 @@ func DiskTotal(path string, _ *notify.Notification) (string, error) {
 	return fmtHuman(usage.Total), nil
 }
 
-func DiskPercentage(path string, _ *notify.Notification) (string, error) {
+func DiskPercentage(path string, _ *notify.Notification, _ *any) (string, error) {
 	usage, err := disk.Usage(path)
 	if err != nil {
 		return "", err

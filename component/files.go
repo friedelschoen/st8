@@ -7,7 +7,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func NumFiles(dir string, _ *notify.Notification) (string, error) {
+func NumFiles(dir string, _ *notify.Notification, _ *any) (string, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return "", fmt.Errorf("unable to read directory: %w", err)

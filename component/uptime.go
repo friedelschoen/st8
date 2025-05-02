@@ -8,7 +8,7 @@ import (
 	"github.com/shirou/gopsutil/v3/host"
 )
 
-func Uptime(_ string, _ *notify.Notification) (string, error) {
+func Uptime(_ string, _ *notify.Notification, _ *any) (string, error) {
 	seconds, err := host.Uptime()
 	if err != nil {
 		return "", fmt.Errorf("unable to get uptime: %w", err)

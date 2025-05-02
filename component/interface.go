@@ -6,7 +6,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-type Component func(arg string, not *notify.Notification) (res string, err error)
+type Component func(arg string, not *notify.Notification, cache *any) (res string, err error)
 
 var Functions = map[string]Component{
 	"battery_state":     BatteryState,

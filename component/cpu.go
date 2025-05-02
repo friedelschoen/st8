@@ -2,21 +2,19 @@ package component
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/friedelschoen/st8/notify"
 	"github.com/shirou/gopsutil/v3/cpu"
 )
 
-var (
+type cpucache struct {
 	lastCPUTimes []cpu.TimesStat
 	lastTime     time.Time
-	cpuMu        sync.Mutex
-)
+}
 
 // cpuFreq returns the average current frequency of all CPUs in Hz as a formatted string.
-func CPUFrequency(_ string, _ *notify.Notification) (string, error) {
+func CPUFrequency(_ string, _ *notify.Notification, _ *any) (string, error) {
 	freqs, err := cpu.Info()
 	if err != nil || len(freqs) == 0 {
 		return "", fmt.Errorf("unable to get CPU frequency: %w", err)
@@ -30,22 +28,24 @@ func CPUFrequency(_ string, _ *notify.Notification) (string, error) {
 	return fmt.Sprintf("%.0f MHz", avgFreqMHz), nil
 }
 
-func CPUPercentage(_ string, _ *notify.Notification) (string, error) {
-	cpuMu.Lock()
-	defer cpuMu.Unlock()
+func CPUPercentage(_ string, _ *notify.Notification, cacheptr *any) (string, error) {
+	var cache cpucache
+	if *cacheptr != nil {
+		cache = (*cacheptr).(cpucache)
+	}
 
 	curTimes, err := cpu.Times(false)
 	if err != nil || len(curTimes) == 0 {
 		return "", fmt.Errorf("unable to get CPU times: %w", err)
 	}
 
-	if len(lastCPUTimes) == 0 {
-		lastCPUTimes = curTimes
-		lastTime = time.Now()
+	if len(cache.lastCPUTimes) == 0 {
+		cache.lastCPUTimes = curTimes
+		cache.lastTime = time.Now()
 		return "0", nil // first call
 	}
 
-	last := lastCPUTimes[0]
+	last := cache.lastCPUTimes[0]
 	curr := curTimes[0]
 
 	totalDelta := totalCPU(curr) - totalCPU(last)
@@ -57,8 +57,10 @@ func CPUPercentage(_ string, _ *notify.Notification) (string, error) {
 
 	usage := 100.0 * (1.0 - idleDelta/totalDelta)
 
-	lastCPUTimes = curTimes
-	lastTime = time.Now()
+	cache.lastCPUTimes = curTimes
+	cache.lastTime = time.Now()
+
+	*cacheptr = cache
 
 	return fmt.Sprintf("%.0f", usage), nil
 }

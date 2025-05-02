@@ -7,7 +7,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func KernelRelease(_ string, _ *notify.Notification) (string, error) {
+func KernelRelease(_ string, _ *notify.Notification, _ *any) (string, error) {
 	var res syscall.Utsname
 	if err := syscall.Uname(&res); err != nil {
 		return "", fmt.Errorf("unable to get uname: %w", err)

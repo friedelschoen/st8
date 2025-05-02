@@ -8,7 +8,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-type ComponentFormat []ComponentCall
+type ComponentFormat []*ComponentCall
 
 var ErrorString = "<error>"
 
@@ -23,7 +23,7 @@ func (cf ComponentFormat) Build(not *notify.Notification) (string, error) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			result, err := call.Func(call.Arg, not)
+			result, err := call.Func(call.Arg, not, &call.Cache)
 			if err != nil {
 				result = ErrorString
 			}

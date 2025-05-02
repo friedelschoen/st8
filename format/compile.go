@@ -17,18 +17,20 @@ type ComponentCall struct {
 	Length  int
 	Padding string
 	LeftPad bool
+
+	Cache any
 }
 
-func literal(text string, _ *notify.Notification) (string, error) {
+func literal(text string, _ *notify.Notification, _ *any) (string, error) {
 	return text, nil
 }
 
 var componentPattern = regexp.MustCompile(`^(\w+)(?:!(-)?([^1-9])?([0-9]+))?(?::(.*))?$`)
 
-func parseComponentCall(text string, offset int) (ComponentCall, error) {
+func parseComponentCall(text string, offset int) (*ComponentCall, error) {
 	m := componentPattern.FindStringSubmatch(text)
 	if m == nil {
-		return ComponentCall{}, fmt.Errorf("invalid component, beginning at %d: `%s`", offset, text)
+		return nil, fmt.Errorf("invalid component, beginning at %d: `%s`", offset, text)
 	}
 
 	name := m[1]
@@ -43,9 +45,9 @@ func parseComponentCall(text string, offset int) (ComponentCall, error) {
 
 	compFunc, ok := component.Functions[name]
 	if !ok {
-		return ComponentCall{}, fmt.Errorf("undefined function, beginning at %d: %s", offset, name)
+		return nil, fmt.Errorf("undefined function, beginning at %d: %s", offset, name)
 	}
-	return ComponentCall{Func: compFunc, Arg: arg, LeftPad: padLeft, Length: padLength, Padding: padRune}, nil
+	return &ComponentCall{Func: compFunc, Arg: arg, LeftPad: padLeft, Length: padLength, Padding: padRune}, nil
 }
 
 func CompileFormat(input string) (ComponentFormat, error) {
@@ -60,7 +62,7 @@ func CompileFormat(input string) (ComponentFormat, error) {
 			break
 		}
 		if nextIdx > 0 {
-			calls = append(calls, ComponentCall{Func: literal, Arg: input[:nextIdx]})
+			calls = append(calls, &ComponentCall{Func: literal, Arg: input[:nextIdx]})
 			input = input[nextIdx:]
 			offset += nextIdx
 		}
@@ -80,7 +82,7 @@ func CompileFormat(input string) (ComponentFormat, error) {
 	}
 
 	if len(input) > 0 {
-		calls = append(calls, ComponentCall{Func: literal, Arg: input})
+		calls = append(calls, &ComponentCall{Func: literal, Arg: input})
 	}
 
 	return calls, nil

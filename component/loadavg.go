@@ -7,7 +7,7 @@ import (
 	"github.com/shirou/gopsutil/v3/load"
 )
 
-func LoadAverage(min string, _ *notify.Notification) (string, error) {
+func LoadAverage(min string, _ *notify.Notification, _ *any) (string, error) {
 	stat, err := load.Avg()
 	if err != nil {
 		return "", fmt.Errorf("unable to get average load: %w", err)

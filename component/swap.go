@@ -7,7 +7,7 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
-func SwapFree(_ string, _ *notify.Notification) (string, error) {
+func SwapFree(_ string, _ *notify.Notification, _ *any) (string, error) {
 	v, err := mem.SwapMemory()
 	if err != nil {
 		return "", err
@@ -15,7 +15,7 @@ func SwapFree(_ string, _ *notify.Notification) (string, error) {
 	return fmtHuman(v.Free), nil
 }
 
-func SwapUsed(_ string, _ *notify.Notification) (string, error) {
+func SwapUsed(_ string, _ *notify.Notification, _ *any) (string, error) {
 	v, err := mem.SwapMemory()
 	if err != nil {
 		return "", err
@@ -24,7 +24,7 @@ func SwapUsed(_ string, _ *notify.Notification) (string, error) {
 	return fmtHuman(used), nil
 }
 
-func SwapTotal(_ string, _ *notify.Notification) (string, error) {
+func SwapTotal(_ string, _ *notify.Notification, _ *any) (string, error) {
 	v, err := mem.SwapMemory()
 	if err != nil {
 		return "", err
@@ -32,7 +32,7 @@ func SwapTotal(_ string, _ *notify.Notification) (string, error) {
 	return fmtHuman(v.Total), nil
 }
 
-func SwapPercentage(_ string, _ *notify.Notification) (string, error) {
+func SwapPercentage(_ string, _ *notify.Notification, _ *any) (string, error) {
 	v, err := mem.SwapMemory()
 	if err != nil {
 		return "", err

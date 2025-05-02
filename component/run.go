@@ -11,7 +11,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func RunCommand(cmdline string, _ *notify.Notification) (string, error) {
+func RunCommand(cmdline string, _ *notify.Notification, _ *any) (string, error) {
 	var buf strings.Builder
 	cmd := exec.Command("sh", "-c", cmdline)
 	cmd.Stdin = nil
@@ -29,12 +29,10 @@ type commandstate struct {
 	err     error
 	time    time.Time
 	running bool
+	mu      sync.Mutex
 }
 
-var commandmutex sync.Mutex
-var commandoutputs = make(map[string]commandstate)
-
-func PeriodCommand(arg string, _ *notify.Notification) (string, error) {
+func PeriodCommand(arg string, _ *notify.Notification, cacheptr *any) (string, error) {
 	durstr, cmdline, ok := strings.Cut(arg, ",")
 	if !ok {
 		return "", fmt.Errorf("argument requires a comma")
@@ -44,13 +42,20 @@ func PeriodCommand(arg string, _ *notify.Notification) (string, error) {
 		return "", fmt.Errorf("invalid duration `%s`: %w", durstr, err)
 	}
 
-	commandmutex.Lock()
-	defer commandmutex.Unlock()
-	cache, ok := commandoutputs[cmdline]
+	/* commandstate pointer to avoid copying mutexes */
+	var cache *commandstate
+	if *cacheptr != nil {
+		cache = (*cacheptr).(*commandstate)
+	}
+	if cache == nil {
+		cache = new(commandstate)
+		*cacheptr = cache
+	}
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
 
-	if !ok || (!cache.running && time.Since(cache.time) > dur) {
+	if !cache.running && time.Since(cache.time) > dur {
 		cache.running = true
-		commandoutputs[cmdline] = cache
 		go func() {
 			var buf strings.Builder
 			cmd := exec.Command("sh", "-c", cmdline)
@@ -61,12 +66,11 @@ func PeriodCommand(arg string, _ *notify.Notification) (string, error) {
 			if err := cmd.Run(); err != nil {
 				cache.err = fmt.Errorf("unable to execute `%s`: %w", cmdline, err)
 			}
-			commandmutex.Lock()
-			defer commandmutex.Unlock()
+			cache.mu.Lock()
+			defer cache.mu.Unlock()
 			cache.output = strings.TrimSpace(buf.String())
 			cache.time = time.Now()
 			cache.running = false
-			commandoutputs[cmdline] = cache
 		}()
 	}
 

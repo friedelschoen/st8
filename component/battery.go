@@ -8,7 +8,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func BatteryState(_ string, _ *notify.Notification) (string, error) {
+func BatteryState(_ string, _ *notify.Notification, _ *any) (string, error) {
 	bat, err := battery.Get(0)
 	if err != nil {
 		return "", fmt.Errorf("unable to get battery status: %w", err)
@@ -17,7 +17,7 @@ func BatteryState(_ string, _ *notify.Notification) (string, error) {
 	return bat.State.String(), nil
 }
 
-func BatteryPercentage(_ string, _ *notify.Notification) (string, error) {
+func BatteryPercentage(_ string, _ *notify.Notification, _ *any) (string, error) {
 	bat, err := battery.Get(0)
 	if err != nil {
 		return "", fmt.Errorf("unable to get battery status: %w", err)
@@ -27,7 +27,7 @@ func BatteryPercentage(_ string, _ *notify.Notification) (string, error) {
 	return fmt.Sprintf("%.0f%%", perc), nil
 }
 
-func BatteryRemaining(_ string, _ *notify.Notification) (string, error) {
+func BatteryRemaining(_ string, _ *notify.Notification, _ *any) (string, error) {
 	bat, err := battery.Get(0)
 	if err != nil {
 		return "", fmt.Errorf("unable to get battery status: %w", err)
