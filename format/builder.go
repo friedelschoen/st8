@@ -2,6 +2,7 @@ package format
 
 import (
 	"errors"
+	"strings"
 	"sync"
 
 	"github.com/friedelschoen/st8/notify"
@@ -23,14 +24,23 @@ func (cf ComponentFormat) Build(not *notify.Notification) (string, error) {
 		go func() {
 			defer wg.Done()
 			result, err := call.Func(call.Arg, not)
-			mu.Lock()
-			defer mu.Unlock()
 			if err != nil {
-				errs = append(errs, err)
 				result = ErrorString
 			}
+			if call.Length != 0 && len(result) < call.Length {
+				pad := strings.Repeat(call.Padding, call.Length-len(result))
+				if call.LeftPad {
+					result = result + pad
+				} else {
+					result = pad + result
+				}
+			}
+
+			mu.Lock()
+			defer mu.Unlock()
 			results[i] = result
 			length += len(result)
+			errs = append(errs, err)
 		}()
 	}
 

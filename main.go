@@ -14,7 +14,7 @@ import (
 var (
 	statusFile     = pflag.StringP("status", "s", "", "path to status format")
 	notifyFile     = pflag.StringP("notification", "n", "", "path to notification format")
-	timeout        = pflag.Duration("not-timeout", 5*time.Second, "default timeout of a notification")
+	timeout        = pflag.DurationP("not-timeout", "N", 5*time.Second, "default timeout of a notification")
 	rotateInterval = pflag.DurationP("rotate", "r", time.Second, "rotate notifications every ...")
 	updateInterval = pflag.DurationP("update", "u", time.Second, "update interval")
 	printFlag      = pflag.BoolP("print", "p", false, "print to stdout instead of using XStoreName")
