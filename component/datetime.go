@@ -1,7 +1,11 @@
 package component
 
-import "time"
+import (
+	"time"
 
-func Datetime(format string) (string, error) {
+	"github.com/friedelschoen/st8/notify"
+)
+
+func Datetime(format string, _ *notify.Notification) (string, error) {
 	return time.Now().Format(format), nil
 }

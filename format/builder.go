@@ -3,13 +3,15 @@ package format
 import (
 	"errors"
 	"sync"
+
+	"github.com/friedelschoen/st8/notify"
 )
 
 type ComponentFormat []ComponentCall
 
 var ErrorString = "<error>"
 
-func (cf ComponentFormat) Build() (string, error) {
+func (cf ComponentFormat) Build(not *notify.Notification) (string, error) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var errs []error
@@ -20,7 +22,7 @@ func (cf ComponentFormat) Build() (string, error) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			result, err := call.Func(call.Arg)
+			result, err := call.Func(call.Arg, not)
 			mu.Lock()
 			defer mu.Unlock()
 			if err != nil {

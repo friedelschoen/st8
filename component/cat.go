@@ -1,8 +1,12 @@
 package component
 
-import "os"
+import (
+	"os"
 
-func ReadFile(file string) (string, error) {
+	"github.com/friedelschoen/st8/notify"
+)
+
+func ReadFile(file string, _ *notify.Notification) (string, error) {
 	content, err := os.ReadFile(file)
 	return string(content), err
 }

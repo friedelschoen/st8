@@ -1,8 +1,12 @@
 package component
 
-import "fmt"
+import (
+	"fmt"
 
-type Component func(arg string) (res string, err error)
+	"github.com/friedelschoen/st8/notify"
+)
+
+type Component func(arg string, not *notify.Notification) (res string, err error)
 
 var Functions = map[string]Component{
 	"battery_state":     BatteryState,
@@ -25,6 +29,11 @@ var Functions = map[string]Component{
 	"load_avg":          LoadAverage,
 	"netspeed_rx":       NetspeedRx,
 	"netspeed_tx":       NetspeedTx,
+	"notify_appname":    NotifyAppName,
+	"notify_appicon":    NotifyAppIcon,
+	"notify_summary":    NotifySummary,
+	"notify_body":       NotifyBody,
+	"notify_actions":    NotifyActions,
 	"num_files":         NumFiles,
 	"ram_free":          RamFree,
 	"ram_perc":          RamPercentage,

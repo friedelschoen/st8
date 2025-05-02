@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/friedelschoen/st8/notify"
 	"github.com/shirou/gopsutil/v3/net"
 )
 
@@ -18,7 +19,7 @@ var (
 	mu     sync.Mutex
 )
 
-func NetspeedRx(interfaceName string) (string, error) {
+func NetspeedRx(interfaceName string, _ *notify.Notification) (string, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -45,7 +46,7 @@ func NetspeedRx(interfaceName string) (string, error) {
 	return fmtHuman(bps) + "/s", nil
 }
 
-func NetspeedTx(interfaceName string) (string, error) {
+func NetspeedTx(interfaceName string, _ *notify.Notification) (string, error) {
 	mu.Lock()
 	defer mu.Unlock()
 

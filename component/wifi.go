@@ -3,10 +3,11 @@ package component
 import (
 	"fmt"
 
+	"github.com/friedelschoen/st8/notify"
 	"github.com/mdlayher/wifi"
 )
 
-func WifiESSID(interfaceName string) (string, error) {
+func WifiESSID(interfaceName string, _ *notify.Notification) (string, error) {
 	client, err := wifi.New()
 	if err != nil {
 		return "", fmt.Errorf("failed to open netlink: %w", err)
@@ -36,7 +37,7 @@ func WifiESSID(interfaceName string) (string, error) {
 	return string(bss.SSID), nil
 }
 
-func WifiPerc(interfaceName string) (string, error) {
+func WifiPerc(interfaceName string, _ *notify.Notification) (string, error) {
 	client, err := wifi.New()
 	if err != nil {
 		return "", fmt.Errorf("failed to open netlink: %w", err)

@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/friedelschoen/st8/notify"
 	"github.com/shirou/gopsutil/v3/cpu"
 )
 
@@ -15,7 +16,7 @@ var (
 )
 
 // cpuFreq returns the average current frequency of all CPUs in Hz as a formatted string.
-func CPUFrequency(_ string) (string, error) {
+func CPUFrequency(_ string, _ *notify.Notification) (string, error) {
 	freqs, err := cpu.Info()
 	if err != nil || len(freqs) == 0 {
 		return "", fmt.Errorf("unable to get CPU frequency: %w", err)
@@ -29,7 +30,7 @@ func CPUFrequency(_ string) (string, error) {
 	return fmt.Sprintf("%.0f MHz", avgFreqMHz), nil
 }
 
-func CPUPercentage(_ string) (string, error) {
+func CPUPercentage(_ string, _ *notify.Notification) (string, error) {
 	cpuMu.Lock()
 	defer cpuMu.Unlock()
 

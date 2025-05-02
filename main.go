@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/friedelschoen/st8/format"
+	"github.com/friedelschoen/st8/notify"
 	"github.com/spf13/pflag"
 )
 
@@ -52,7 +53,7 @@ func main() {
 	printMode := *printFlag || runOnce
 
 	if runOnce {
-		text, err := cf.Build()
+		text, err := cf.Build(nil)
 		if err != nil && !*noWarn {
 			fmt.Fprintln(os.Stderr, err)
 		}
@@ -67,7 +68,7 @@ func main() {
 	}
 	defer dpy.Close()
 
-	notify, err := NotifyStart()
+	notify, err := notify.NotifyStart()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "unable to start daemon: %v", err)
 		os.Exit(1)
@@ -81,14 +82,14 @@ func main() {
 		select {
 		case not := <-notify.C:
 			if printMode {
-				fmt.Println(not.summary)
+				fmt.Println(not.Summary)
 			} else {
-				dpy.StoreName(not.summary)
+				dpy.StoreName(not.Summary)
 			}
 			time.Sleep(*notifyTime)
 
 		case <-ticker.C:
-			text, err := cf.Build()
+			text, err := cf.Build(nil)
 			if err != nil && !*noWarn {
 				fmt.Fprintln(os.Stderr, err)
 			}

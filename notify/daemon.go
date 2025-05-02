@@ -1,4 +1,4 @@
-package main
+package notify
 
 import (
 	"fmt"
@@ -11,14 +11,12 @@ var (
 )
 
 type Notification struct {
-	appName    string
-	replacesID uint32
-	appIcon    string
-	summary    string
-	body       string
-	actions    []string
-	hints      map[string]dbus.Variant
-	timeout    int32
+	AppName string
+	AppIcon string
+	Summary string
+	Body    string
+	Actions []string
+	Hints   map[string]dbus.Variant
 }
 
 type NotificationDaemon struct {
@@ -39,7 +37,7 @@ func (n *NotificationDaemon) GetServerInformation() (name, vendor, version, spec
 // D-Bus: Notify method
 func (n *NotificationDaemon) Notify(appName string, replacesID uint32, appIcon string, summary string, body string, actions []string, hints map[string]dbus.Variant, timeout int32) (uint32, *dbus.Error) {
 	n.C <- Notification{
-		appName, replacesID, appIcon, summary, body, actions, hints, timeout,
+		appName, appIcon, summary, body, actions, hints,
 	}
 	if replacesID == 0 {
 		notificationID++

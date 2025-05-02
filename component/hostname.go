@@ -1,7 +1,11 @@
 package component
 
-import "os"
+import (
+	"os"
 
-func Hostname(_ string) (string, error) {
+	"github.com/friedelschoen/st8/notify"
+)
+
+func Hostname(_ string, _ *notify.Notification) (string, error) {
 	return os.Hostname()
 }

@@ -3,10 +3,11 @@ package component
 import (
 	"fmt"
 
+	"github.com/friedelschoen/st8/notify"
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
-func SwapFree(_ string) (string, error) {
+func SwapFree(_ string, _ *notify.Notification) (string, error) {
 	v, err := mem.SwapMemory()
 	if err != nil {
 		return "", err
@@ -14,7 +15,7 @@ func SwapFree(_ string) (string, error) {
 	return fmtHuman(v.Free), nil
 }
 
-func SwapUsed(_ string) (string, error) {
+func SwapUsed(_ string, _ *notify.Notification) (string, error) {
 	v, err := mem.SwapMemory()
 	if err != nil {
 		return "", err
@@ -23,7 +24,7 @@ func SwapUsed(_ string) (string, error) {
 	return fmtHuman(used), nil
 }
 
-func SwapTotal(_ string) (string, error) {
+func SwapTotal(_ string, _ *notify.Notification) (string, error) {
 	v, err := mem.SwapMemory()
 	if err != nil {
 		return "", err
@@ -31,7 +32,7 @@ func SwapTotal(_ string) (string, error) {
 	return fmtHuman(v.Total), nil
 }
 
-func SwapPercentage(_ string) (string, error) {
+func SwapPercentage(_ string, _ *notify.Notification) (string, error) {
 	v, err := mem.SwapMemory()
 	if err != nil {
 		return "", err

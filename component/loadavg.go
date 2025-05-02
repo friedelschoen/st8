@@ -3,10 +3,11 @@ package component
 import (
 	"fmt"
 
+	"github.com/friedelschoen/st8/notify"
 	"github.com/shirou/gopsutil/v3/load"
 )
 
-func LoadAverage(min string) (string, error) {
+func LoadAverage(min string, _ *notify.Notification) (string, error) {
 	stat, err := load.Avg()
 	if err != nil {
 		return "", fmt.Errorf("unable to get average load: %w", err)

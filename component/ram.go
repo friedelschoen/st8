@@ -3,10 +3,11 @@ package component
 import (
 	"fmt"
 
+	"github.com/friedelschoen/st8/notify"
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
-func RamFree(_ string) (string, error) {
+func RamFree(_ string, _ *notify.Notification) (string, error) {
 	v, err := mem.VirtualMemory()
 	if err != nil {
 		return "", err
@@ -14,7 +15,7 @@ func RamFree(_ string) (string, error) {
 	return fmtHuman(v.Available), nil
 }
 
-func RamUsed(_ string) (string, error) {
+func RamUsed(_ string, _ *notify.Notification) (string, error) {
 	v, err := mem.VirtualMemory()
 	if err != nil {
 		return "", err
@@ -23,7 +24,7 @@ func RamUsed(_ string) (string, error) {
 	return fmtHuman(used), nil
 }
 
-func RamTotal(_ string) (string, error) {
+func RamTotal(_ string, _ *notify.Notification) (string, error) {
 	v, err := mem.VirtualMemory()
 	if err != nil {
 		return "", err
@@ -31,7 +32,7 @@ func RamTotal(_ string) (string, error) {
 	return fmtHuman(v.Total), nil
 }
 
-func RamPercentage(_ string) (string, error) {
+func RamPercentage(_ string, _ *notify.Notification) (string, error) {
 	v, err := mem.VirtualMemory()
 	if err != nil {
 		return "", err

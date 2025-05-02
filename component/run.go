@@ -5,9 +5,11 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/friedelschoen/st8/notify"
 )
 
-func RunCommand(cmdline string) (string, error) {
+func RunCommand(cmdline string, _ *notify.Notification) (string, error) {
 	var buf strings.Builder
 	cmd := exec.Command("sh", "-c", cmdline)
 	cmd.Stdin = nil

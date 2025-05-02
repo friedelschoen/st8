@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/friedelschoen/st8/component"
+	"github.com/friedelschoen/st8/notify"
 )
 
 type ComponentCall struct {
@@ -12,7 +13,7 @@ type ComponentCall struct {
 	Arg  string
 }
 
-func literal(text string) (string, error) {
+func literal(text string, _ *notify.Notification) (string, error) {
 	return text, nil
 }
 
