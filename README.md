@@ -100,6 +100,10 @@ New in `st8`:
 
 <sup>2</sup>Do only work in `notify.txt`
 
+### Notes:
+- `period_command` is non-blocking and is meant for heavy commands which does not have to be run every period, e.g. checking for updates.
+  `run_command` is blocking and is meant for lightweight commands, e.g. `sv status sshd`
+
 ### Not implemented (yet)
 
 | function              | description                 |
