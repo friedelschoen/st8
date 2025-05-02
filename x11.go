@@ -17,6 +17,9 @@ func (dpy *Display) cptr() *C.Display {
 }
 
 func (dpy *Display) Close() {
+	if dpy == nil {
+		return
+	}
 	C.XCloseDisplay(dpy.cptr())
 }
 

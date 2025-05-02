@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"slices"
+	"sync"
 	"time"
 
 	"github.com/friedelschoen/st8/format"
@@ -14,12 +16,12 @@ import (
 var (
 	statusFile     = pflag.StringP("status", "s", "", "path to status format")
 	notifyFile     = pflag.StringP("notification", "n", "", "path to notification format")
-	timeout        = pflag.DurationP("not-timeout", "N", 5*time.Second, "default timeout of a notification")
-	rotateInterval = pflag.DurationP("rotate", "r", time.Second, "rotate notifications every ...")
+	timeout        = pflag.DurationP("notif-timeout", "N", 10*time.Second, "default timeout of a notification")
+	rotateInterval = pflag.DurationP("rotate", "r", 2500*time.Millisecond, "rotate notifications every ...")
 	updateInterval = pflag.DurationP("update", "u", time.Second, "update interval")
 	printFlag      = pflag.BoolP("print", "p", false, "print to stdout instead of using XStoreName")
 	onceFlag       = pflag.BoolP("once", "1", false, "only print once (implies --print)")
-	noWarn         = pflag.BoolP("no-warn", "w", false, "suppress command errors")
+	quiet          = pflag.BoolP("quiet", "q", false, "suppress command errors")
 	helpFlag       = pflag.BoolP("help", "h", false, "show help and exit")
 )
 
@@ -67,17 +69,20 @@ func main() {
 
 	if runOnce {
 		text, err := cStatus.Build(nil)
-		if err != nil && !*noWarn {
+		if err != nil && !*quiet {
 			fmt.Fprintln(os.Stderr, err)
 		}
 		fmt.Println(text)
 		return
 	}
 
-	dpy := OpenDisplay()
-	if dpy == nil {
-		fmt.Fprintln(os.Stderr, "unable to open display")
-		os.Exit(1)
+	var dpy *Display
+	if !printMode {
+		dpy = OpenDisplay()
+		if dpy == nil {
+			fmt.Fprintln(os.Stderr, "unable to open display")
+			os.Exit(1)
+		}
 	}
 	defer dpy.Close()
 
@@ -88,25 +93,28 @@ func main() {
 	}
 	defer notifyChan.Close()
 
-	ticker := time.NewTicker(*updateInterval)
-	defer ticker.Stop()
-
-	var notifications []string
+	var notifMu sync.Mutex
+	var notifSet []string
 	var notifIndex int
-	var notifTimer *time.Timer
 
 	showNotif := func() {
-		if len(notifications) == 0 {
+		if len(notifSet) == 0 {
 			return
 		}
-		prefix := fmt.Sprintf("(%d/%d) ", notifIndex+1, len(notifications))
-		text := prefix + notifications[notifIndex]
+		var prefix string
+		if len(notifSet) != 1 {
+			prefix = fmt.Sprintf("(%d/%d) ", notifIndex+1, len(notifSet))
+		}
+		text := prefix + notifSet[notifIndex]
 		if printMode {
 			fmt.Println(text)
 		} else {
 			dpy.StoreName(text)
 		}
 	}
+
+	updateTicker := time.NewTicker(*updateInterval)
+	defer updateTicker.Stop()
 
 	rotateTicker := time.NewTicker(*rotateInterval)
 	defer rotateTicker.Stop()
@@ -115,30 +123,39 @@ func main() {
 		select {
 		case not := <-notifyChan.C:
 			text, err := cNotify.Build(&not)
-			if err != nil && !*noWarn {
+			if err != nil && !*quiet {
 				fmt.Fprintln(os.Stderr, err)
 			}
-			notifications = append(notifications, text)
+			notifMu.Lock()
+			notifSet = append(notifSet, text)
 			notifIndex = 0
 			showNotif()
+			notifMu.Unlock()
 
-			if notifTimer != nil {
-				notifTimer.Stop()
+			nTimeout := *timeout
+			if not.Timeout != 0 {
+				nTimeout = not.Timeout
 			}
-			notifTimer = time.AfterFunc(*timeout, func() {
-				notifications = nil
+
+			time.AfterFunc(nTimeout, func() {
+				notifMu.Lock()
+				defer notifMu.Unlock()
+				notifSet = slices.DeleteFunc(notifSet, func(n string) bool {
+					return n == text
+				})
 			})
 
 		case <-rotateTicker.C:
-			if len(notifications) > 1 {
-				notifIndex = (notifIndex + 1) % len(notifications)
+			notifMu.Lock()
+			if len(notifSet) > 1 {
 				showNotif()
 			}
+			notifMu.Unlock()
 
-		case <-ticker.C:
-			if len(notifications) == 0 {
+		case <-updateTicker.C:
+			if len(notifSet) == 0 {
 				text, err := cStatus.Build(nil)
-				if err != nil && !*noWarn {
+				if err != nil && !*quiet {
 					fmt.Fprintln(os.Stderr, err)
 				}
 				if printMode {

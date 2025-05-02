@@ -2,6 +2,7 @@ package notify
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/godbus/dbus/v5"
 )
@@ -17,6 +18,7 @@ type Notification struct {
 	Body    string
 	Actions []string
 	Hints   map[string]dbus.Variant
+	Timeout time.Duration
 }
 
 type NotificationDaemon struct {
@@ -36,8 +38,9 @@ func (n *NotificationDaemon) GetServerInformation() (name, vendor, version, spec
 
 // D-Bus: Notify method
 func (n *NotificationDaemon) Notify(appName string, replacesID uint32, appIcon string, summary string, body string, actions []string, hints map[string]dbus.Variant, timeout int32) (uint32, *dbus.Error) {
+	dur := time.Duration(timeout) * time.Millisecond
 	n.C <- Notification{
-		appName, appIcon, summary, body, actions, hints,
+		appName, appIcon, summary, body, actions, hints, dur,
 	}
 	if replacesID == 0 {
 		notificationID++
