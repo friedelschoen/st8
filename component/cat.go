@@ -9,5 +9,5 @@ import (
 
 func ReadFile(file string, _ *notify.Notification) (string, error) {
 	content, err := os.ReadFile(file)
-	return strings.Trim(string(content), "\n\t\r "), err
+	return strings.TrimSpace(string(content)), err
 }

@@ -34,6 +34,7 @@ var Functions = map[string]Component{
 	"notify_summary":    NotifySummary,
 	"notify_body":       NotifyBody,
 	"notify_actions":    NotifyActions,
+	"period_command":    PeriodCommand,
 	"num_files":         NumFiles,
 	"ram_free":          RamFree,
 	"ram_perc":          RamPercentage,
