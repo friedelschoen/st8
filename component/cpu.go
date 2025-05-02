@@ -42,6 +42,7 @@ func CPUPercentage(_ string, _ *notify.Notification, cacheptr *any) (string, err
 	if len(cache.lastCPUTimes) == 0 {
 		cache.lastCPUTimes = curTimes
 		cache.lastTime = time.Now()
+		*cacheptr = cache
 		return "0", nil // first call
 	}
 
@@ -59,7 +60,6 @@ func CPUPercentage(_ string, _ *notify.Notification, cacheptr *any) (string, err
 
 	cache.lastCPUTimes = curTimes
 	cache.lastTime = time.Now()
-
 	*cacheptr = cache
 
 	return fmt.Sprintf("%.0f", usage), nil
