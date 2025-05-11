@@ -38,7 +38,10 @@ func (n *NotificationDaemon) GetServerInformation() (name, vendor, version, spec
 
 // D-Bus: Notify method
 func (n *NotificationDaemon) Notify(appName string, replacesID uint32, appIcon string, summary string, body string, actions []string, hints map[string]dbus.Variant, timeout int32) (uint32, *dbus.Error) {
-	dur := time.Duration(timeout) * time.Millisecond
+	var dur time.Duration
+	if timeout > 0 {
+		dur = time.Duration(timeout) * time.Millisecond
+	}
 	n.C <- Notification{
 		appName, appIcon, summary, body, actions, hints, dur,
 	}
