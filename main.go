@@ -2,16 +2,25 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/friedelschoen/st8/driver"
 	"github.com/friedelschoen/st8/format"
 	"github.com/friedelschoen/st8/notify"
 	"github.com/spf13/pflag"
 )
+
+func driverNames() string {
+	keys := slices.Collect(maps.Keys(driver.Drivers))
+	slices.Sort(keys)
+	return strings.Join(keys, ", ")
+}
 
 var (
 	statusFile     = pflag.StringP("status", "s", "", "path to status format")
@@ -19,10 +28,11 @@ var (
 	timeout        = pflag.DurationP("notif-timeout", "N", 10*time.Second, "default timeout of a notification")
 	rotateInterval = pflag.DurationP("rotate", "r", 2500*time.Millisecond, "rotate notifications every ...")
 	updateInterval = pflag.DurationP("update", "u", time.Second, "update interval")
-	printFlag      = pflag.BoolP("print", "p", false, "print to stdout instead of using XStoreName")
+	driverFlag     = pflag.StringP("driver", "d", "stdout", "use driver: "+driverNames())
 	onceFlag       = pflag.BoolP("once", "1", false, "only print once (implies --print)")
 	quiet          = pflag.BoolP("quiet", "q", false, "suppress command errors")
 	helpFlag       = pflag.BoolP("help", "h", false, "show help and exit")
+	noNotify       = pflag.Bool("no-notify", false, "disable notifications")
 )
 
 func readFormat(path string) format.ComponentFormat {
@@ -61,37 +71,48 @@ func main() {
 		}
 	}
 
+	drv, ok := driver.Drivers[*driverFlag]
+	if !ok {
+		fmt.Fprintf(os.Stdout, "not a valid driver: %s\n  valid drivers are: %s\n", *driverFlag, driverNames())
+	}
+
+	err := drv.Init()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "unable to initialize driver: %v\n", err)
+		os.Exit(1)
+	}
+	defer drv.Close()
+
 	cStatus := readFormat(*statusFile)
 	cNotify := readFormat(*notifyFile)
 
-	runOnce := *onceFlag
-	printMode := *printFlag || runOnce
-
-	if runOnce {
+	if *onceFlag {
 		text, err := cStatus.Build(nil)
 		if err != nil && !*quiet {
 			fmt.Fprintln(os.Stderr, err)
 		}
-		fmt.Println(text)
+		err = drv.SetText(text)
+		if err != nil && !*quiet {
+			fmt.Fprintln(os.Stderr, err)
+		}
 		return
 	}
 
-	var dpy *Display
-	if !printMode {
-		dpy = OpenDisplay()
-		if dpy == nil {
-			fmt.Fprintln(os.Stderr, "unable to open display")
+	notifyChannel := make(chan notify.Notification)
+	var notifier *notify.NotificationDaemon
+
+	if !*noNotify {
+		notifier, err = notify.NotifyStart(notifyChannel)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "unable to start daemon: %v", err)
 			os.Exit(1)
 		}
 	}
-	defer dpy.Close()
-
-	notifyChan, err := notify.NotifyStart()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable to start daemon: %v", err)
-		os.Exit(1)
-	}
-	defer notifyChan.Close()
+	defer func() {
+		if notifier != nil {
+			notifier.Close()
+		}
+	}()
 
 	var notifMu sync.Mutex
 	var notifSet []string
@@ -106,10 +127,8 @@ func main() {
 			prefix = fmt.Sprintf("(%d/%d) ", notifIndex+1, len(notifSet))
 		}
 		text := prefix + notifSet[notifIndex]
-		if printMode {
-			fmt.Println(text)
-		} else {
-			dpy.StoreName(text)
+		if err := drv.SetText(text); err != nil && !*quiet {
+			fmt.Fprintln(os.Stderr, err)
 		}
 	}
 
@@ -121,7 +140,7 @@ func main() {
 
 	for {
 		select {
-		case not := <-notifyChan.C:
+		case not := <-notifyChannel:
 			text, err := cNotify.Build(&not)
 			if err != nil && !*quiet {
 				fmt.Fprintln(os.Stderr, err)
@@ -158,10 +177,8 @@ func main() {
 				if err != nil && !*quiet {
 					fmt.Fprintln(os.Stderr, err)
 				}
-				if printMode {
-					fmt.Println(text)
-				} else {
-					dpy.StoreName(text)
+				if err := drv.SetText(text); err != nil && !*quiet {
+					fmt.Fprintln(os.Stderr, err)
 				}
 			}
 		}

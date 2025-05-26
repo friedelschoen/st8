@@ -59,10 +59,10 @@ func (n *NotificationDaemon) CloseNotification(id uint32) *dbus.Error {
 	return nil
 }
 
-func NotifyStart() (*NotificationDaemon, error) {
+func NotifyStart(channel chan Notification) (*NotificationDaemon, error) {
 	var conn NotificationDaemon
 
-	conn.C = make(chan Notification)
+	conn.C = channel
 
 	var err error
 	conn.Conn, err = dbus.ConnectSessionBus()
