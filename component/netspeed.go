@@ -25,9 +25,8 @@ func NetspeedRx(interfaceName string, _ *notify.Notification, cacheptr *any) (st
 
 	var rx uint64
 	for _, s := range stats {
-		if s.Name == interfaceName {
-			rx = s.BytesRecv
-			break
+		if interfaceName == "*" || s.Name == interfaceName {
+			rx += s.BytesRecv
 		}
 	}
 	now := time.Now()
@@ -53,9 +52,8 @@ func NetspeedTx(interfaceName string, _ *notify.Notification, cacheptr *any) (st
 
 	var tx uint64
 	for _, s := range stats {
-		if s.Name == interfaceName {
-			tx = s.BytesSent
-			break
+		if interfaceName == "*" || s.Name == interfaceName {
+			tx += s.BytesSent
 		}
 	}
 	now := time.Now()
