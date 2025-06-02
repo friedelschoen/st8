@@ -10,18 +10,19 @@ import (
 
 var dateformats = make(map[string]*strftime.Strftime)
 
-func Datetime(format string, _ *notify.Notification, cacheptr *any) (string, error) {
+func Datetime(block *Block, args map[string]string, not *notify.Notification, cacheptr *any) error {
 	var datefmt *strftime.Strftime
 	if *cacheptr != nil {
 		datefmt = (*cacheptr).(*strftime.Strftime)
 	} else {
 		var err error
-		datefmt, err = strftime.New(format)
+		datefmt, err = strftime.New(args["datefmt"])
 		if err != nil {
-			return "", fmt.Errorf("unable to parse date-format `%s`: %w", format, err)
+			return fmt.Errorf("unable to parse date-format `%s`: %w", args["datefmt"], err)
 		}
 		*cacheptr = datefmt
 	}
 
-	return datefmt.FormatString(time.Now()), nil
+	block.Text = datefmt.FormatString(time.Now())
+	return nil
 }

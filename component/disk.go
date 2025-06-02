@@ -7,34 +7,38 @@ import (
 	"github.com/shirou/gopsutil/v3/disk"
 )
 
-func DiskFree(path string, _ *notify.Notification, _ *any) (string, error) {
-	usage, err := disk.Usage(path)
+func DiskFree(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
+	usage, err := disk.Usage(args["path"])
 	if err != nil {
-		return "", err
+		return err
 	}
-	return fmtHuman(usage.Free), nil
+	block.Text = fmtHuman(usage.Free)
+	return nil
 }
 
-func DiskUsed(path string, _ *notify.Notification, _ *any) (string, error) {
-	usage, err := disk.Usage(path)
+func DiskUsed(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
+	usage, err := disk.Usage(args["path"])
 	if err != nil {
-		return "", err
+		return err
 	}
-	return fmtHuman(usage.Used), nil
+	block.Text = fmtHuman(usage.Used)
+	return nil
 }
 
-func DiskTotal(path string, _ *notify.Notification, _ *any) (string, error) {
-	usage, err := disk.Usage(path)
+func DiskTotal(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
+	usage, err := disk.Usage(args["path"])
 	if err != nil {
-		return "", err
+		return err
 	}
-	return fmtHuman(usage.Total), nil
+	block.Text = fmtHuman(usage.Total)
+	return nil
 }
 
-func DiskPercentage(path string, _ *notify.Notification, _ *any) (string, error) {
-	usage, err := disk.Usage(path)
+func DiskPercentage(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
+	usage, err := disk.Usage(args["path"])
 	if err != nil {
-		return "", err
+		return err
 	}
-	return fmt.Sprintf("%d", int(usage.UsedPercent)), nil
+	block.Text = fmt.Sprintf("%d", int(usage.UsedPercent))
+	return nil
 }

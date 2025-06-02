@@ -11,17 +11,18 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func RunCommand(cmdline string, _ *notify.Notification, _ *any) (string, error) {
+func RunCommand(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	var buf strings.Builder
-	cmd := exec.Command("sh", "-c", cmdline)
+	cmd := exec.Command("sh", "-c", args["command"])
 	cmd.Stdin = nil
 	cmd.Stdout = &buf
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("unable to execute `%s`: %w", cmdline, err)
+		return fmt.Errorf("unable to execute `%s`: %w", args["command"], err)
 	}
-	return strings.TrimSpace(buf.String()), nil
+	block.Text = strings.TrimSpace(buf.String())
+	return nil
 }
 
 type commandstate struct {
@@ -32,14 +33,14 @@ type commandstate struct {
 	mu      sync.Mutex
 }
 
-func PeriodCommand(arg string, _ *notify.Notification, cacheptr *any) (string, error) {
-	durstr, cmdline, ok := strings.Cut(arg, ",")
+func PeriodCommand(block *Block, args map[string]string, not *notify.Notification, cacheptr *any) error {
+	durstr, cmdline, ok := strings.Cut(args["command"], ",")
 	if !ok {
-		return "", fmt.Errorf("argument requires a comma")
+		return fmt.Errorf("argument requires a comma")
 	}
 	dur, err := time.ParseDuration(durstr)
 	if err != nil {
-		return "", fmt.Errorf("invalid duration `%s`: %w", durstr, err)
+		return fmt.Errorf("invalid duration `%s`: %w", durstr, err)
 	}
 
 	/* commandstate pointer to avoid copying mutexes */
@@ -74,5 +75,6 @@ func PeriodCommand(arg string, _ *notify.Notification, cacheptr *any) (string, e
 		}()
 	}
 
-	return cache.output, cache.err
+	block.Text = cache.output
+	return cache.err
 }

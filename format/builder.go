@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/friedelschoen/st8/component"
 	"github.com/friedelschoen/st8/notify"
 )
 
@@ -12,43 +13,40 @@ type ComponentFormat []*ComponentCall
 
 var ErrorString = "<error>"
 
-func (cf ComponentFormat) Build(not *notify.Notification) (string, error) {
+func (cf ComponentFormat) Build(not *notify.Notification) ([]component.Block, error) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var errs []error
-	var length int
-	results := make([]string, len(cf))
+	results := make([]component.Block, len(cf))
 
 	for i, call := range cf {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			result, err := call.Func(call.Arg, not, &call.Cache)
+			result := call.Block
+			err := call.Func(&result, call.Arg, not, &call.Cache)
 			if err != nil {
-				result = ErrorString
+				result = call.Block
+				result.Text = ErrorString
 			}
-			if call.Length != 0 && len(result) < call.Length {
-				pad := strings.Repeat(call.Padding, call.Length-len(result))
+			if call.Length != 0 && len(result.Text) < call.Length {
+				pad := strings.Repeat(call.Padding, call.Length-len(result.Text))
 				if call.LeftPad {
-					result = result + pad
+					result.Text += pad
 				} else {
-					result = pad + result
+					result.Text = pad + result.Text
 				}
 			}
+			result.Text = call.Prefix + result.Text + call.Suffix
 
 			mu.Lock()
 			defer mu.Unlock()
 			results[i] = result
-			length += len(result)
 			errs = append(errs, err)
 		}()
 	}
 
 	wg.Wait()
 
-	bytes := make([]byte, 0, length)
-	for _, s := range results {
-		bytes = append(bytes, s...)
-	}
-	return string(bytes), errors.Join(errs...)
+	return results, errors.Join(errs...)
 }

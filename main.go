@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/friedelschoen/st8/component"
 	"github.com/friedelschoen/st8/driver"
 	"github.com/friedelschoen/st8/format"
 	"github.com/friedelschoen/st8/notify"
@@ -34,20 +35,6 @@ var (
 	helpFlag       = pflag.BoolP("help", "h", false, "show help and exit")
 	noNotify       = pflag.Bool("no-notify", false, "disable notifications")
 )
-
-func readFormat(path string) format.ComponentFormat {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable to read format file at %s: %v\n", path, err)
-		os.Exit(1)
-	}
-	comp, err := format.CompileFormat(string(data))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable to parse format file at %s: %v\n", path, err)
-		os.Exit(1)
-	}
-	return comp
-}
 
 func main() {
 	pflag.Parse()
@@ -83,8 +70,16 @@ func main() {
 	}
 	defer drv.Close()
 
-	cStatus := readFormat(*statusFile)
-	cNotify := readFormat(*notifyFile)
+	cStatus, err := format.BuildComponents(*statusFile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error in status-config: %v\n", err)
+		os.Exit(1)
+	}
+	cNotify, err := format.BuildComponents(*notifyFile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error in notify-config: %v\n", err)
+		os.Exit(1)
+	}
 
 	if *onceFlag {
 		text, err := cStatus.Build(nil)
@@ -115,7 +110,7 @@ func main() {
 	}()
 
 	var notifMu sync.Mutex
-	var notifSet []string
+	var notifSet [][]component.Block
 	var notifIndex int
 
 	showNotif := func() {
@@ -126,8 +121,11 @@ func main() {
 		if len(notifSet) != 1 {
 			prefix = fmt.Sprintf("(%d/%d) ", notifIndex+1, len(notifSet))
 		}
-		text := prefix + notifSet[notifIndex]
-		if err := drv.SetText(text); err != nil && !*quiet {
+		blocks := []component.Block{
+			{Text: prefix},
+		}
+		blocks = append(blocks, notifSet[notifIndex]...)
+		if err := drv.SetText(blocks); err != nil && !*quiet {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	}
@@ -159,8 +157,8 @@ func main() {
 			time.AfterFunc(nTimeout, func() {
 				notifMu.Lock()
 				defer notifMu.Unlock()
-				notifSet = slices.DeleteFunc(notifSet, func(n string) bool {
-					return n == text
+				notifSet = slices.DeleteFunc(notifSet, func(n []component.Block) bool {
+					return slices.Equal(n, text)
 				})
 			})
 

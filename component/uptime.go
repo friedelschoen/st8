@@ -8,10 +8,11 @@ import (
 	"github.com/shirou/gopsutil/v3/host"
 )
 
-func Uptime(_ string, _ *notify.Notification, _ *any) (string, error) {
+func Uptime(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	seconds, err := host.Uptime()
 	if err != nil {
-		return "", fmt.Errorf("unable to get uptime: %w", err)
+		return fmt.Errorf("unable to get uptime: %w", err)
 	}
-	return (time.Duration(seconds) * time.Second).String(), nil
+	block.Text = (time.Duration(seconds) * time.Second).String()
+	return nil
 }

@@ -2,6 +2,7 @@ package notify
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/godbus/dbus/v5"
@@ -55,7 +56,7 @@ func (n *NotificationDaemon) Notify(appName string, replacesID uint32, appIcon s
 // D-Bus: CloseNotification method
 func (n *NotificationDaemon) CloseNotification(id uint32) *dbus.Error {
 	// hier kan je nog echte afsluitlogica implementeren
-	fmt.Printf("CloseNotification called for id: %d\n", id)
+	fmt.Fprintf(os.Stderr, "CloseNotification called for id: %d\n", id)
 	return nil
 }
 
@@ -84,7 +85,7 @@ func NotifyStart(channel chan Notification) (*NotificationDaemon, error) {
 		return nil, fmt.Errorf("another daemon running")
 	}
 
-	fmt.Println("Notification daemon is running...")
+	fmt.Fprintln(os.Stderr, "Notification daemon is running...")
 
 	return &conn, nil
 }

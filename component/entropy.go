@@ -7,10 +7,11 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func EntropyAvailable(_ string, _ *notify.Notification, _ *any) (string, error) {
+func EntropyAvailable(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	data, err := os.ReadFile("/proc/sys/kernel/random/entropy_avail")
 	if err != nil {
-		return "", fmt.Errorf("unable to get entropy: %w", err)
+		return fmt.Errorf("unable to get entropy: %w", err)
 	}
-	return string(data), nil
+	block.Text = string(data)
+	return nil
 }

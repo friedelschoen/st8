@@ -1,89 +1,148 @@
 package format
 
 import (
+	"bufio"
 	"fmt"
+	"io"
+	"iter"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/friedelschoen/st8/component"
-	"github.com/friedelschoen/st8/notify"
 )
 
 type ComponentCall struct {
-	Func component.Component
-	Arg  string
+	Func  component.Component
+	Arg   map[string]string
+	Block component.Block
 
 	Length  int
 	Padding string
 	LeftPad bool
 
 	Cache any
+
+	Prefix, Suffix string
 }
 
-func literal(text string, _ *notify.Notification, _ *any) (string, error) {
-	return text, nil
+var componentPattern = regexp.MustCompile(`^(?:(-)?([^1-9])?([0-9]+))?$`)
+
+func parseConfig(file io.Reader, filename string) iter.Seq2[string, map[string]string] {
+	return func(yield func(string, map[string]string) bool) {
+		scan := bufio.NewScanner(file)
+		current := make(map[string]string)
+		var section string
+		var linenr int
+		for scan.Scan() {
+			line := scan.Text()
+			linenr++
+
+			if idx := strings.IndexAny(line, ";#"); idx != -1 {
+				line = line[:idx]
+			}
+			line = strings.TrimSpace(line)
+			if len(line) == 0 {
+				continue
+			}
+
+			if line[0] == '[' {
+				end := strings.IndexByte(line, ']')
+				if end != len(line)-1 {
+					fmt.Fprintf(os.Stderr, "%s:%d: garbage found after `]`: %s\n", filename, linenr, line[end:])
+				}
+				newsection := strings.TrimSpace(line[1:end])
+				if len(newsection) == 0 {
+					fmt.Fprintf(os.Stderr, "%s:%d: section is empty\n", filename, linenr)
+					continue
+				}
+				if len(section) > 0 {
+					if len(current) == 0 {
+						fmt.Fprintf(os.Stderr, "%s:%d: no values for section `%s`\n", filename, linenr, section)
+					} else if !yield(section, current) {
+						return
+					}
+				}
+
+				section = newsection
+				current = make(map[string]string)
+				continue
+			}
+
+			key, value, ok := strings.Cut(line, "=")
+			if !ok {
+				fmt.Fprintf(os.Stderr, "%s:%d: not a key-value pair: %s\n", filename, linenr, line)
+				continue
+			}
+			key = strings.TrimSpace(key)
+			if len(key) == 0 {
+				fmt.Fprintf(os.Stderr, "%s:%d: key is empty\n", filename, linenr)
+				continue
+			}
+			value = strings.TrimSpace(value)
+			if len(value) >= 2 && value[0] == '"' && value[len(value)-1] == '"' {
+				value = value[1 : len(value)-1]
+			}
+			current[key] = value
+		}
+		if len(current) == 0 && len(section) > 0 {
+			fmt.Fprintf(os.Stderr, "%s:%d: no values for section `%s`\n", filename, linenr, section)
+		} else {
+			yield(section, current)
+		}
+	}
 }
 
-var componentPattern = regexp.MustCompile(`^(\w+)(?:!(-)?([^1-9])?([0-9]+))?(?::(.*))?$`)
-
-func parseComponentCall(text string, offset int) (*ComponentCall, error) {
-	m := componentPattern.FindStringSubmatch(text)
-	if m == nil {
-		return nil, fmt.Errorf("invalid component, beginning at %d: `%s`", offset, text)
+func BuildComponents(filename string) (ComponentFormat, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
 	}
-
-	name := m[1]
-	padLeft := m[2] != ""
-	padRune := m[3]
-	padLength, _ := strconv.Atoi(m[4])
-	arg := m[5]
-
-	if padRune == "" {
-		padRune = " "
-	}
-
-	compFunc, ok := component.Functions[name]
-	if !ok {
-		return nil, fmt.Errorf("undefined function, beginning at %d: %s", offset, name)
-	}
-	return &ComponentCall{Func: compFunc, Arg: arg, LeftPad: padLeft, Length: padLength, Padding: padRune}, nil
-}
-
-func CompileFormat(input string) (ComponentFormat, error) {
-	var calls ComponentFormat
-	offset := 0
-
-	input = strings.ReplaceAll(input, "\n", "")
-
-	for {
-		nextIdx := strings.Index(input, "${")
-		if nextIdx == -1 {
-			break
+	defer file.Close()
+	var result ComponentFormat
+	for compname, values := range parseConfig(file, filename) {
+		call := &ComponentCall{}
+		var ok bool
+		call.Func, ok = component.Functions[compname]
+		if !ok {
+			return nil, fmt.Errorf("unknown component: %s", compname)
 		}
-		if nextIdx > 0 {
-			calls = append(calls, &ComponentCall{Func: literal, Arg: input[:nextIdx]})
-			input = input[nextIdx:]
-			offset += nextIdx
-		}
+		call.Arg = values
 
-		endIdx := strings.Index(input, "}")
-		if endIdx == -1 {
-			return nil, fmt.Errorf("unterminated call, beginning at %d: `%s`", offset, input)
+		if format, ok := values["format"]; ok {
+			begin := strings.IndexByte(format, '{')
+			if begin == -1 {
+				return nil, fmt.Errorf("in component `%s`: format does not contain {}: %s", compname, format)
+			}
+			call.Prefix = format[:begin]
+			format = format[begin+1:]
+
+			end := strings.IndexByte(format, '}')
+			if end == -1 {
+				return nil, fmt.Errorf("in component `%s`: unmatched `}`: %s", compname, format)
+			}
+			call.Suffix = format[end+1:]
+			format = format[:end]
+
+			m := componentPattern.FindStringSubmatch(format)
+			if m == nil {
+				return nil, fmt.Errorf("in component `%s`: invalid format: %s", compname, format)
+			}
+			call.LeftPad = m[1] != ""
+			call.Padding = m[2]
+			call.Length, _ = strconv.Atoi(m[3])
+		}
+		if len(call.Padding) == 0 {
+			call.Padding = " "
 		}
 
-		call, err := parseComponentCall(input[2:endIdx], offset)
-		if err != nil {
+		call.Block.Name = compname
+		if err := UnmarshalConf(values, &call.Block); err != nil {
 			return nil, err
 		}
-		calls = append(calls, call)
-		input = input[endIdx+1:]
-		offset += endIdx + 1
+		result = append(result, call)
 	}
 
-	if len(input) > 0 {
-		calls = append(calls, &ComponentCall{Func: literal, Arg: input})
-	}
-
-	return calls, nil
+	return result, nil
 }

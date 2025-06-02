@@ -7,7 +7,8 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func ReadFile(file string, _ *notify.Notification, _ *any) (string, error) {
-	content, err := os.ReadFile(file)
-	return strings.TrimSpace(string(content)), err
+func ReadFile(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
+	content, err := os.ReadFile(args["file"])
+	block.Text = strings.TrimSpace(string(content))
+	return err
 }

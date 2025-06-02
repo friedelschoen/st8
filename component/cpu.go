@@ -14,10 +14,10 @@ type cpucache struct {
 }
 
 // cpuFreq returns the average current frequency of all CPUs in Hz as a formatted string.
-func CPUFrequency(_ string, _ *notify.Notification, _ *any) (string, error) {
+func CPUFrequency(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	freqs, err := cpu.Info()
 	if err != nil || len(freqs) == 0 {
-		return "", fmt.Errorf("unable to get CPU frequency: %w", err)
+		return fmt.Errorf("unable to get CPU frequency: %w", err)
 	}
 
 	var sum float64
@@ -25,10 +25,11 @@ func CPUFrequency(_ string, _ *notify.Notification, _ *any) (string, error) {
 		sum += f.Mhz
 	}
 	avgFreqMHz := sum / float64(len(freqs))
-	return fmt.Sprintf("%.0f MHz", avgFreqMHz), nil
+	block.Text = fmt.Sprintf("%.0f MHz", avgFreqMHz)
+	return nil
 }
 
-func CPUPercentage(_ string, _ *notify.Notification, cacheptr *any) (string, error) {
+func CPUPercentage(block *Block, args map[string]string, not *notify.Notification, cacheptr *any) error {
 	var cache cpucache
 	if *cacheptr != nil {
 		cache = (*cacheptr).(cpucache)
@@ -36,14 +37,15 @@ func CPUPercentage(_ string, _ *notify.Notification, cacheptr *any) (string, err
 
 	curTimes, err := cpu.Times(false)
 	if err != nil || len(curTimes) == 0 {
-		return "", fmt.Errorf("unable to get CPU times: %w", err)
+		return fmt.Errorf("unable to get CPU times: %w", err)
 	}
 
 	if len(cache.lastCPUTimes) == 0 {
 		cache.lastCPUTimes = curTimes
 		cache.lastTime = time.Now()
 		*cacheptr = cache
-		return "0", nil // first call
+		block.Text = "0"
+		return nil // first call
 	}
 
 	last := cache.lastCPUTimes[0]
@@ -53,7 +55,8 @@ func CPUPercentage(_ string, _ *notify.Notification, cacheptr *any) (string, err
 	idleDelta := curr.Idle - last.Idle
 
 	if totalDelta <= 0 {
-		return "0", nil
+		block.Text = "0"
+		return nil
 	}
 
 	usage := 100.0 * (1.0 - idleDelta/totalDelta)
@@ -62,7 +65,8 @@ func CPUPercentage(_ string, _ *notify.Notification, cacheptr *any) (string, err
 	cache.lastTime = time.Now()
 	*cacheptr = cache
 
-	return fmt.Sprintf("%.0f", usage), nil
+	block.Text = fmt.Sprintf("%.0f", usage)
+	return nil
 }
 
 func totalCPU(t cpu.TimesStat) float64 {

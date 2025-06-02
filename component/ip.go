@@ -41,29 +41,33 @@ func getIPAddrs(ifaceName string) (ipv4s []string, ipv6s []string, err error) {
 	return
 }
 
-func IPv4(iface string, _ *notify.Notification, _ *any) (string, error) {
-	ipv4s, _, err := getIPAddrs(iface)
+func IPv4(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
+	ipv4s, _, err := getIPAddrs(args["interface"])
 	if err != nil {
-		return "", err
+		return err
 	}
-	return strings.Join(ipv4s, ", "), nil
+	block.Text = strings.Join(ipv4s, ", ")
+	return nil
 }
 
-func IPv6(iface string, _ *notify.Notification, _ *any) (string, error) {
-	_, ipv6s, err := getIPAddrs(iface)
+func IPv6(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
+	_, ipv6s, err := getIPAddrs(args["interface"])
 	if err != nil {
-		return "", err
+		return err
 	}
-	return strings.Join(ipv6s, ", "), nil
+	block.Text = strings.Join(ipv6s, ", ")
+	return nil
 }
 
-func Up(iface string, _ *notify.Notification, _ *any) (string, error) {
-	netIface, err := net.InterfaceByName(iface)
+func Up(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
+	netIface, err := net.InterfaceByName(args["interface"])
 	if err != nil {
-		return "", fmt.Errorf("interface not found: %w", err)
+		return fmt.Errorf("interface not found: %w", err)
 	}
 	if netIface.Flags&net.FlagUp != 0 {
-		return "up", nil
+		block.Text = "up"
+		return nil
 	}
-	return "down", nil
+	block.Text = "down"
+	return nil
 }

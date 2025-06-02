@@ -8,29 +8,31 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func BatteryState(_ string, _ *notify.Notification, _ *any) (string, error) {
+func BatteryState(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	bat, err := battery.Get(0)
 	if err != nil {
-		return "", fmt.Errorf("unable to get battery status: %w", err)
+		return fmt.Errorf("unable to get battery status: %w", err)
 	}
 
-	return bat.State.String(), nil
+	block.Text = bat.State.String()
+	return nil
 }
 
-func BatteryPercentage(_ string, _ *notify.Notification, _ *any) (string, error) {
+func BatteryPercentage(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	bat, err := battery.Get(0)
 	if err != nil {
-		return "", fmt.Errorf("unable to get battery status: %w", err)
+		return fmt.Errorf("unable to get battery status: %w", err)
 	}
 
 	perc := bat.Current / bat.Full
-	return fmt.Sprintf("%.0f%%", perc), nil
+	block.Text = fmt.Sprintf("%.0f%%", perc)
+	return nil
 }
 
-func BatteryRemaining(_ string, _ *notify.Notification, _ *any) (string, error) {
+func BatteryRemaining(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	bat, err := battery.Get(0)
 	if err != nil {
-		return "", fmt.Errorf("unable to get battery status: %w", err)
+		return fmt.Errorf("unable to get battery status: %w", err)
 	}
 
 	var hours float64
@@ -42,5 +44,6 @@ func BatteryRemaining(_ string, _ *notify.Notification, _ *any) (string, error) 
 	}
 	dur := time.Hour * time.Duration(hours)
 
-	return dur.String(), nil
+	block.Text = dur.String()
+	return nil
 }

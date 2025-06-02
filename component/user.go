@@ -8,20 +8,23 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func Gid(_ string, _ *notify.Notification, _ *any) (string, error) {
+func Gid(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	gid := os.Getgid()
-	return fmt.Sprintf("%d", gid), nil
+	block.Text = fmt.Sprintf("%d", gid)
+	return nil
 }
 
-func Uid(_ string, _ *notify.Notification, _ *any) (string, error) {
+func Uid(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	uid := os.Getuid()
-	return fmt.Sprintf("%d", uid), nil
+	block.Text = fmt.Sprintf("%d", uid)
+	return nil
 }
 
-func Username(_ string, _ *notify.Notification, _ *any) (string, error) {
+func Username(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	user, err := user.Current()
 	if err != nil {
-		return "", fmt.Errorf("unable to determine user: %w", err)
+		return fmt.Errorf("unable to determine user: %w", err)
 	}
-	return user.Username, nil
+	block.Text = user.Username
+	return nil
 }

@@ -9,7 +9,10 @@ package driver
 import "C"
 import (
 	"fmt"
+	"strings"
 	"unsafe"
+
+	"github.com/friedelschoen/st8/component"
 )
 
 type Display struct{ ptr *C.Display }
@@ -34,8 +37,15 @@ func (dpy *Display) Close() error {
 	return nil
 }
 
-func (dpy *Display) SetText(text string) error {
-	ctext := C.CString(text)
+func (dpy *Display) SetText(line []component.Block) error {
+	var out strings.Builder
+	for i, block := range line {
+		if i > 0 {
+			out.WriteString(" | ")
+		}
+		out.WriteString(block.Text)
+	}
+	ctext := C.CString(out.String())
 	defer C.free(unsafe.Pointer(ctext))
 	C.XStoreName(dpy.ptr, C.XDefaultRootWindow(dpy.ptr), ctext)
 	C.XFlush(dpy.ptr)

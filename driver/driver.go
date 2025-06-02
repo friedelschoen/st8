@@ -1,12 +1,16 @@
 package driver
 
-import "io"
+import (
+	"io"
+
+	"github.com/friedelschoen/st8/component"
+)
 
 type Driver interface {
 	io.Closer
 
 	Init() error
-	SetText(string) error
+	SetText([]component.Block) error
 }
 
 var Drivers = map[string]Driver{}

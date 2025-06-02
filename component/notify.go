@@ -7,37 +7,42 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func NotifyAppName(_ string, not *notify.Notification, _ *any) (string, error) {
+func NotifyAppName(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	if not == nil {
-		return "", fmt.Errorf("cannot use notify_* in regular status")
+		return fmt.Errorf("cannot use notify_* in regular status")
 	}
-	return not.AppName, nil
+	block.Text = not.AppName
+	return nil
 }
 
-func NotifyAppIcon(_ string, not *notify.Notification, _ *any) (string, error) {
+func NotifyAppIcon(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	if not == nil {
-		return "", fmt.Errorf("cannot use notify_* in regular status")
+		return fmt.Errorf("cannot use notify_* in regular status")
 	}
-	return not.AppIcon, nil
+	block.Text = not.AppIcon
+	return nil
 }
 
-func NotifySummary(_ string, not *notify.Notification, _ *any) (string, error) {
+func NotifySummary(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	if not == nil {
-		return "", fmt.Errorf("cannot use notify_* in regular status")
+		return fmt.Errorf("cannot use notify_* in regular status")
 	}
-	return not.Summary, nil
+	block.Text = not.Summary
+	return nil
 }
 
-func NotifyBody(_ string, not *notify.Notification, _ *any) (string, error) {
+func NotifyBody(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	if not == nil {
-		return "", fmt.Errorf("cannot use notify_* in regular status")
+		return fmt.Errorf("cannot use notify_* in regular status")
 	}
-	return not.Body, nil
+	block.Text = not.Body
+	return nil
 }
 
-func NotifyActions(_ string, not *notify.Notification, _ *any) (string, error) {
+func NotifyActions(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	if not == nil {
-		return "", fmt.Errorf("cannot use notify_* in regular status")
+		return fmt.Errorf("cannot use notify_* in regular status")
 	}
-	return strings.Join(not.Actions, ", "), nil
+	block.Text = strings.Join(not.Actions, ", ")
+	return nil
 }

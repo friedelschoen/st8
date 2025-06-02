@@ -7,21 +7,25 @@ import (
 	"github.com/shirou/gopsutil/v3/load"
 )
 
-func LoadAverage(min string, _ *notify.Notification, _ *any) (string, error) {
+func LoadAverage(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
 	stat, err := load.Avg()
 	if err != nil {
-		return "", fmt.Errorf("unable to get average load: %w", err)
+		return fmt.Errorf("unable to get average load: %w", err)
 	}
-	switch min {
+	switch args["minutes"] {
 	case "":
-		return fmt.Sprintf("%.2f %.2f %.2f", stat.Load1, stat.Load5, stat.Load15), nil
+		block.Text = fmt.Sprintf("%.2f %.2f %.2f", stat.Load1, stat.Load5, stat.Load15)
+		return nil
 	case "1":
-		return fmt.Sprintf("%.2f", stat.Load1), nil
+		block.Text = fmt.Sprintf("%.2f", stat.Load1)
+		return nil
 	case "5":
-		return fmt.Sprintf("%.2f", stat.Load5), nil
+		block.Text = fmt.Sprintf("%.2f", stat.Load5)
+		return nil
 	case "15":
-		return fmt.Sprintf("%.2f", stat.Load15), nil
+		block.Text = fmt.Sprintf("%.2f", stat.Load15)
+		return nil
 	default:
-		return "", fmt.Errorf("unable to get average load: period must be either 1, 5 or 15 (minutes)")
+		return fmt.Errorf("unable to get average load: period must be either 1, 5 or 15 (minutes)")
 	}
 }
