@@ -23,7 +23,7 @@ func (stdoutDriver) SetText(line []component.Block) error {
 	return nil
 }
 
-func (stdoutDriver) Init() error {
+func (stdoutDriver) Init(chan<- struct{}) error {
 	return nil
 }
 

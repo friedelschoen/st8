@@ -21,7 +21,7 @@ func init() {
 	Drivers["xsetname"] = &Display{}
 }
 
-func (dpy *Display) Init() error {
+func (dpy *Display) Init(chan<- struct{}) error {
 	dpy.ptr = (*C.Display)(C.XOpenDisplay(nil))
 	if dpy.ptr == nil {
 		return fmt.Errorf("unable to open display")

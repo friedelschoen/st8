@@ -14,8 +14,9 @@ import (
 )
 
 type SwayStatus struct {
-	enc *json.Encoder
-	dec *json.Decoder
+	update chan<- struct{}
+	enc    *json.Encoder
+	dec    *json.Decoder
 
 	handlers map[string]component.EventHandler
 }
@@ -24,7 +25,8 @@ func init() {
 	Drivers["swaybar"] = &SwayStatus{}
 }
 
-func (dpy *SwayStatus) Init() error {
+func (dpy *SwayStatus) Init(update chan<- struct{}) error {
+	dpy.update = update
 	dpy.handlers = make(map[string]component.EventHandler)
 	dpy.enc = json.NewEncoder(os.Stdout)
 	dpy.dec = json.NewDecoder(os.Stdin)
@@ -56,6 +58,7 @@ func (dpy *SwayStatus) eventLoop() {
 			continue
 		}
 		handler(evt)
+		dpy.update <- struct{}{}
 	}
 }
 

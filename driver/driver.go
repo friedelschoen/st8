@@ -9,7 +9,7 @@ import (
 type Driver interface {
 	io.Closer
 
-	Init() error
+	Init(update chan<- struct{}) error
 	SetText([]component.Block) error
 }
 

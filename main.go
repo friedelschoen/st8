@@ -62,8 +62,8 @@ func main() {
 	if !ok {
 		fmt.Fprintf(os.Stdout, "not a valid driver: %s\n  valid drivers are: %s\n", *driverFlag, driverNames())
 	}
-
-	err := drv.Init()
+	updateNow := make(chan struct{})
+	err := drv.Init(updateNow)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "unable to initialize driver: %v\n", err)
 		os.Exit(1)
@@ -176,6 +176,17 @@ func main() {
 				showNotif()
 			}
 			notifMu.Unlock()
+
+		case <-updateNow:
+			if len(notifSet) == 0 {
+				text, err := cStatus.Build(nil)
+				if err != nil && !*quiet {
+					fmt.Fprintln(os.Stderr, err)
+				}
+				if err := drv.SetText(text); err != nil && !*quiet {
+					fmt.Fprintln(os.Stderr, err)
+				}
+			}
 
 		case <-updateTicker.C:
 			if len(notifSet) == 0 {
