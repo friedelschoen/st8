@@ -154,11 +154,19 @@ func main() {
 				nTimeout = not.Timeout
 			}
 
+			linesum := func(blocks []component.Block) int {
+				i := 0
+				for _, blk := range blocks {
+					i += blk.ID
+				}
+				return i
+			}
+
 			time.AfterFunc(nTimeout, func() {
 				notifMu.Lock()
 				defer notifMu.Unlock()
 				notifSet = slices.DeleteFunc(notifSet, func(n []component.Block) bool {
-					return slices.Equal(n, text)
+					return linesum(n) == linesum(text)
 				})
 			})
 

@@ -16,6 +16,8 @@ import (
 type SwayStatus struct {
 	enc *json.Encoder
 	dec *json.Decoder
+
+	handlers map[string]component.EventHandler
 }
 
 func init() {
@@ -23,6 +25,7 @@ func init() {
 }
 
 func (dpy *SwayStatus) Init() error {
+	dpy.handlers = make(map[string]component.EventHandler)
 	dpy.enc = json.NewEncoder(os.Stdout)
 	dpy.dec = json.NewDecoder(os.Stdin)
 	hdr := swaybarproto.Header{
@@ -38,14 +41,21 @@ func (dpy *SwayStatus) Init() error {
 }
 
 func (dpy *SwayStatus) eventLoop() {
-	f, _ := os.Create("clickyevent.txt")
-	defer f.Close()
+	if tok, err := dpy.dec.Token(); err != nil || tok != json.Delim('[') {
+		return
+	}
 	for {
-		var evt swaybarproto.ClickEvent
-		dpy.dec.Decode(&evt)
-
-		bytes, _ := json.Marshal(evt)
-		f.Write(bytes)
+		var evt component.ClickEvent
+		err := dpy.dec.Decode(&evt)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "unable to read event: %v", err)
+			return
+		}
+		handler, ok := dpy.handlers[fmt.Sprintf("%s-%s", evt.Name, evt.Instance)]
+		if !ok {
+			continue
+		}
+		handler(evt)
 	}
 }
 
@@ -58,8 +68,14 @@ func (dpy *SwayStatus) SetText(line []component.Block) error {
 	for i, block := range line {
 		body[i].Block = block
 		body[i].Instance = strconv.Itoa(i)
+		if block.OnClick != nil {
+			dpy.handlers[fmt.Sprintf("%s-%d", block.Name, i)] = block.OnClick
+		}
 	}
-	dpy.enc.Encode(body)
+	err := dpy.enc.Encode(body)
+	if err != nil {
+		return err
+	}
 	fmt.Print(",")
 	return nil
 }

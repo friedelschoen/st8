@@ -11,7 +11,9 @@ import (
 
 type ComponentFormat []*ComponentCall
 
-var ErrorString = "<error>"
+const ErrorString = "<error>"
+
+var incrementer = 0
 
 func (cf ComponentFormat) Build(not *notify.Notification) ([]component.Block, error) {
 	var wg sync.WaitGroup
@@ -24,6 +26,8 @@ func (cf ComponentFormat) Build(not *notify.Notification) ([]component.Block, er
 		go func() {
 			defer wg.Done()
 			result := call.Block
+			result.ID = incrementer
+			incrementer++
 			err := call.Func(&result, call.Arg, not, &call.Cache)
 			if err != nil {
 				result = call.Block

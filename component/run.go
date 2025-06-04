@@ -34,13 +34,9 @@ type commandstate struct {
 }
 
 func PeriodCommand(block *Block, args map[string]string, not *notify.Notification, cacheptr *any) error {
-	durstr, cmdline, ok := strings.Cut(args["command"], ",")
-	if !ok {
-		return fmt.Errorf("argument requires a comma")
-	}
-	dur, err := time.ParseDuration(durstr)
+	dur, err := time.ParseDuration(args["interval"])
 	if err != nil {
-		return fmt.Errorf("invalid duration `%s`: %w", durstr, err)
+		return fmt.Errorf("invalid duration `%s`: %w", args["interval"], err)
 	}
 
 	/* commandstate pointer to avoid copying mutexes */
@@ -59,13 +55,13 @@ func PeriodCommand(block *Block, args map[string]string, not *notify.Notificatio
 		cache.running = true
 		go func() {
 			var buf strings.Builder
-			cmd := exec.Command("sh", "-c", cmdline)
+			cmd := exec.Command("sh", "-c", args["command"])
 			cmd.Stdin = nil
 			cmd.Stdout = &buf
 			cmd.Stderr = os.Stderr
 
 			if err := cmd.Run(); err != nil {
-				cache.err = fmt.Errorf("unable to execute `%s`: %w", cmdline, err)
+				cache.err = fmt.Errorf("unable to execute `%s`: %w", args["command"], err)
 			}
 			cache.mu.Lock()
 			defer cache.mu.Unlock()

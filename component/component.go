@@ -29,6 +29,31 @@ const (
 	MarkupMarkdown Markup = "none"  // none -> is converted to pango
 )
 
+type ClickEvent struct {
+	// The name of the block, if set.
+	Name string `json:"name,omitempty"`
+	// The instance of the block, if set.
+	Instance string `json:"instance,omitempty"`
+	// The absolute X location of the click.
+	X int `json:"x"`
+	// The absolute Y location of the click.
+	Y int `json:"y"`
+	// The X11 button number (or 0 if unmapped).
+	Button int `json:"button"`
+	// The event code corresponding to the button.
+	Event int `json:"event"`
+	// X position relative to the block’s top-left corner.
+	RelativeX int `json:"relative_x"`
+	// Y position relative to the block’s top-left corner.
+	RelativeY int `json:"relative_y"`
+	// Width of the block in pixels.
+	Width int `json:"width"`
+	// Height of the block in pixels.
+	Height int `json:"height"`
+}
+
+type EventHandler func(evt ClickEvent)
+
 type Block struct {
 	// default text to display
 	Text string `json:"full_text"`
@@ -62,6 +87,10 @@ type Block struct {
 	Markup Markup `json:"markup,omitempty" conf:"markup"`
 	// Identifier for click events
 	Name string `json:"name,omitempty"`
+	// Click handler
+	OnClick EventHandler `json:"-"`
+	// Idenfifier
+	ID int `json:"id"`
 }
 
 type Component func(block *Block, args map[string]string, not *notify.Notification, cache *any) error
@@ -86,6 +115,7 @@ func (width Width) MarshalJSON() ([]byte, error) {
 }
 
 var Functions = map[string]Component{
+	"counter":           Counter,
 	"battery_state":     BatteryState,
 	"battery_perc":      BatteryPercentage,
 	"battery_remaining": BatteryRemaining,

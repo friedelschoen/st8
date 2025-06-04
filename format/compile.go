@@ -57,12 +57,8 @@ func parseConfig(file io.Reader, filename string) iter.Seq2[string, map[string]s
 					fmt.Fprintf(os.Stderr, "%s:%d: section is empty\n", filename, linenr)
 					continue
 				}
-				if len(section) > 0 {
-					if len(current) == 0 {
-						fmt.Fprintf(os.Stderr, "%s:%d: no values for section `%s`\n", filename, linenr, section)
-					} else if !yield(section, current) {
-						return
-					}
+				if len(section) > 0 && !yield(section, current) {
+					return
 				}
 
 				section = newsection
@@ -86,9 +82,7 @@ func parseConfig(file io.Reader, filename string) iter.Seq2[string, map[string]s
 			}
 			current[key] = value
 		}
-		if len(current) == 0 && len(section) > 0 {
-			fmt.Fprintf(os.Stderr, "%s:%d: no values for section `%s`\n", filename, linenr, section)
-		} else {
+		if len(section) > 0 {
 			yield(section, current)
 		}
 	}
