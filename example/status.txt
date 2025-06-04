@@ -1,5 +1,18 @@
-󰛀 ${netspeed_rx!8:wlp2s0b1} |
- 󰛀 ${netspeed_tx!8:wlp2s0b1} |
- 󰏗 ${period_command:10m,xbps-install -Mun|wc -l} |
-  ${cpu_perc!3} |
- 󱑂 ${datetime:%d-%m-%y %H:%M:%S}
+[netspeed_rx]
+interface = *
+format = "up: {8}"
+
+[netspeed_tx]
+interface = *
+format = "down: {8}"
+
+[period_command]
+interval = 10m
+command = xbps-install -Mun | wc -l
+format = "pkg: {}"
+
+[cpu_perc]
+format = "cpu: {}"
+
+[datetime]
+datefmt = "%d-%m-%y %H:%M:%S"

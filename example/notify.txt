@@ -1,1 +1,8 @@
-[${notify_appname}] ${notify_summary}: ${notify_body}
+[notify_appname]
+format = [{}]
+
+[notify_summary]
+format = "{}: "
+seperate = no
+
+[notify_body]
