@@ -1,32 +1,68 @@
 package component
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/friedelschoen/st8/notify"
-	"github.com/shirou/gopsutil/v3/cpu"
 )
 
+type CPUStat struct {
+	CPU       string
+	User      float64
+	System    float64
+	Idle      float64
+	Nice      float64
+	Iowait    float64
+	Irq       float64
+	Softirq   float64
+	Steal     float64
+	Guest     float64
+	GuestNice float64
+}
+
 type cpucache struct {
-	lastCPUTimes []cpu.TimesStat
+	lastCPUTimes *CPUStat
 	lastTime     time.Time
 }
 
-// cpuFreq returns the average current frequency of all CPUs in Hz as a formatted string.
-func CPUFrequency(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	freqs, err := cpu.Info()
-	if err != nil || len(freqs) == 0 {
-		return fmt.Errorf("unable to get CPU frequency: %w", err)
+func times() (*CPUStat, error) {
+	file, err := os.Open("/proc/stat")
+	if err != nil {
+		return nil, err
 	}
-
-	var sum float64
-	for _, f := range freqs {
-		sum += f.Mhz
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		fields := strings.Fields(scanner.Text())
+		if fields[0] != "cpu" {
+			continue
+		}
+		var cpu CPUStat
+		cpu.CPU = fields[0]
+		dests := []*float64{
+			&cpu.User,
+			&cpu.Nice,
+			&cpu.System,
+			&cpu.Idle,
+			&cpu.Iowait,
+			&cpu.Irq,
+			&cpu.Softirq,
+			&cpu.Steal,
+			&cpu.Guest,
+			&cpu.GuestNice,
+		}
+		for i, dst := range dests {
+			if *dst, err = strconv.ParseFloat(fields[i+1], 64); err != nil {
+				return nil, err
+			}
+		}
+		return &cpu, nil
 	}
-	avgFreqMHz := sum / float64(len(freqs))
-	block.Text = fmt.Sprintf("%.0f MHz", avgFreqMHz)
-	return nil
+	return nil, scanner.Err()
 }
 
 func CPUPercentage(block *Block, args map[string]string, not *notify.Notification, cacheptr *any) error {
@@ -35,12 +71,12 @@ func CPUPercentage(block *Block, args map[string]string, not *notify.Notificatio
 		cache = (*cacheptr).(cpucache)
 	}
 
-	curTimes, err := cpu.Times(false)
-	if err != nil || len(curTimes) == 0 {
+	curTimes, err := times()
+	if err != nil || curTimes == nil {
 		return fmt.Errorf("unable to get CPU times: %w", err)
 	}
 
-	if len(cache.lastCPUTimes) == 0 {
+	if cache.lastCPUTimes == nil {
 		cache.lastCPUTimes = curTimes
 		cache.lastTime = time.Now()
 		*cacheptr = cache
@@ -48,8 +84,8 @@ func CPUPercentage(block *Block, args map[string]string, not *notify.Notificatio
 		return nil // first call
 	}
 
-	last := cache.lastCPUTimes[0]
-	curr := curTimes[0]
+	last := cache.lastCPUTimes
+	curr := curTimes
 
 	totalDelta := totalCPU(curr) - totalCPU(last)
 	idleDelta := curr.Idle - last.Idle
@@ -69,6 +105,6 @@ func CPUPercentage(block *Block, args map[string]string, not *notify.Notificatio
 	return nil
 }
 
-func totalCPU(t cpu.TimesStat) float64 {
+func totalCPU(t *CPUStat) float64 {
 	return t.User + t.System + t.Idle + t.Nice + t.Iowait + t.Irq + t.Softirq + t.Steal + t.Guest + t.GuestNice
 }

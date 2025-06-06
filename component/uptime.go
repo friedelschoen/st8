@@ -1,18 +1,25 @@
 package component
 
 import (
-	"fmt"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/friedelschoen/st8/notify"
-	"github.com/shirou/gopsutil/v3/host"
 )
 
 func Uptime(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	seconds, err := host.Uptime()
+	contents, err := os.ReadFile("/proc/loadavg")
 	if err != nil {
-		return fmt.Errorf("unable to get uptime: %w", err)
+		return err
 	}
-	block.Text = (time.Duration(seconds) * time.Second).String()
+	fields := strings.Fields(string(contents))
+
+	seconds, err := strconv.ParseFloat(fields[0], 64)
+	if err != nil {
+		return err
+	}
+	block.Text = time.Duration(seconds * float64(time.Second)).String()
 	return nil
 }

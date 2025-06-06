@@ -120,7 +120,6 @@ var Functions = map[string]Component{
 	"battery_perc":      BatteryPercentage,
 	"battery_remaining": BatteryRemaining,
 	"cat":               ReadFile,
-	"cpu_freq":          CPUFrequency,
 	"cpu_perc":          CPUPercentage,
 	"datetime":          Datetime,
 	"disk_free":         DiskFree,

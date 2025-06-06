@@ -1,11 +1,13 @@
 package component
 
 import (
+	"bufio"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/friedelschoen/st8/notify"
-	"github.com/shirou/gopsutil/v3/net"
 )
 
 type netstat struct {
@@ -21,23 +23,47 @@ func match(pattern, text string) bool {
 	return pattern == text
 }
 
+// rx-bytes: 1
+// rx-packets: 2
+// tx-bytes: 9
+// tx-packets: 10
+func getStat(pattern string, field int) (uint64, error) {
+	file, err := os.Open("/proc/net/dev")
+	if err != nil {
+		return 0, err
+	}
+	scanner := bufio.NewScanner(file)
+	var total uint64
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.ContainsRune(line, '|') { // is header
+			continue
+		}
+		fields := strings.Fields(line)
+		name := strings.TrimSuffix(fields[0], ":")
+		if !match(pattern, name) {
+			continue
+		}
+		nr, err := strconv.Atoi(fields[field])
+		if err != nil {
+			return 0, err
+		}
+		total += uint64(nr)
+	}
+	return total, scanner.Err()
+}
+
 func NetspeedRx(block *Block, args map[string]string, not *notify.Notification, cacheptr *any) error {
 	var cache netstat
 	if *cacheptr != nil {
 		cache = (*cacheptr).(netstat)
 	}
 
-	stats, err := net.IOCounters(true)
+	rx, err := getStat(args["interface"], 1)
 	if err != nil {
 		return err
 	}
 
-	var rx uint64
-	for _, s := range stats {
-		if match(args["interface"], s.Name) {
-			rx += s.BytesRecv
-		}
-	}
 	now := time.Now()
 	*cacheptr = netstat{rx, now}
 	if cache.recv == 0 || now.Sub(cache.time).Milliseconds() == 0 {
@@ -56,17 +82,11 @@ func NetspeedTx(block *Block, args map[string]string, not *notify.Notification, 
 		cache = (*cacheptr).(netstat)
 	}
 
-	stats, err := net.IOCounters(true)
+	tx, err := getStat(args["interface"], 9)
 	if err != nil {
 		return err
 	}
 
-	var tx uint64
-	for _, s := range stats {
-		if match(args["interface"], s.Name) {
-			tx += s.BytesSent
-		}
-	}
 	now := time.Now()
 	*cacheptr = netstat{tx, now}
 	if cache.recv == 0 || now.Sub(cache.time).Milliseconds() == 0 {

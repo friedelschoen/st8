@@ -1,45 +1,87 @@
 package component
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 
 	"github.com/friedelschoen/st8/notify"
-	"github.com/shirou/gopsutil/v3/mem"
 )
 
+var units = []string{"B", "kB", "MB", "GB"}
+
+func getMem(key string) (uint64, error) {
+	file, err := os.Open("/proc/meminfo")
+	if err != nil {
+		return 0, err
+	}
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		fields := strings.Fields(line)
+		name := strings.TrimSuffix(fields[0], ":")
+		if key != name {
+			continue
+		}
+		value, err := strconv.ParseUint(fields[1], 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		if len(fields) > 2 {
+			for _, unit := range units {
+				if fields[2] == unit {
+					break
+				}
+				value *= 1024
+			}
+		}
+		return value, nil
+	}
+	return 0, scanner.Err()
+}
+
 func RamFree(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	v, err := mem.VirtualMemory()
+	avail, err := getMem("MemAvailable")
 	if err != nil {
 		return err
 	}
-	block.Text = fmtHuman(v.Available)
+	block.Text = fmtHuman(avail)
 	return nil
 }
 
 func RamUsed(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	v, err := mem.VirtualMemory()
+	avail, err := getMem("MemAvailable")
 	if err != nil {
 		return err
 	}
-	used := v.Total - v.Available
-	block.Text = fmtHuman(used)
+	total, err := getMem("MemTotal")
+	if err != nil {
+		return err
+	}
+	block.Text = fmtHuman(total - avail)
 	return nil
 }
 
 func RamTotal(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	v, err := mem.VirtualMemory()
+	total, err := getMem("MemTotal")
 	if err != nil {
 		return err
 	}
-	block.Text = fmtHuman(v.Total)
+	block.Text = fmtHuman(total)
 	return nil
 }
 
 func RamPercentage(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	v, err := mem.VirtualMemory()
+	avail, err := getMem("MemAvailable")
 	if err != nil {
 		return err
 	}
-	block.Text = fmt.Sprintf("%d", int(v.UsedPercent))
+	total, err := getMem("MemTotal")
+	if err != nil {
+		return err
+	}
+	block.Text = fmt.Sprintf("%.0f", 100-(float64(avail)/float64(total))*100)
 	return nil
 }

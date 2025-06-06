@@ -4,42 +4,48 @@ import (
 	"fmt"
 
 	"github.com/friedelschoen/st8/notify"
-	"github.com/shirou/gopsutil/v3/mem"
 )
 
 func SwapFree(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	v, err := mem.SwapMemory()
+	avail, err := getMem("SwapFree")
 	if err != nil {
 		return err
 	}
-	block.Text = fmtHuman(v.Free)
+	block.Text = fmtHuman(avail)
 	return nil
 }
 
 func SwapUsed(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	v, err := mem.SwapMemory()
+	avail, err := getMem("SwapFree")
 	if err != nil {
 		return err
 	}
-	used := v.Total - v.Free
-	block.Text = fmtHuman(used)
+	total, err := getMem("SwapTotal")
+	if err != nil {
+		return err
+	}
+	block.Text = fmtHuman(total - avail)
 	return nil
 }
 
 func SwapTotal(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	v, err := mem.SwapMemory()
+	total, err := getMem("SwapTotal")
 	if err != nil {
 		return err
 	}
-	block.Text = fmtHuman(v.Total)
+	block.Text = fmtHuman(total)
 	return nil
 }
 
 func SwapPercentage(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	v, err := mem.SwapMemory()
+	avail, err := getMem("SwapFree")
 	if err != nil {
 		return err
 	}
-	block.Text = fmt.Sprintf("%d", int(v.UsedPercent))
+	total, err := getMem("SwapTotal")
+	if err != nil {
+		return err
+	}
+	block.Text = fmt.Sprintf("%.0f", 100-(float64(avail)/float64(total))*100)
 	return nil
 }
