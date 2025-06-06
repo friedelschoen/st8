@@ -3,7 +3,6 @@ module github.com/friedelschoen/st8
 go 1.24.2
 
 require (
-	github.com/distatus/battery v0.11.0
 	github.com/godbus/dbus/v5 v5.1.0
 	github.com/lestrrat-go/strftime v1.1.0
 	github.com/mdlayher/wifi v0.5.0
@@ -28,5 +27,4 @@ require (
 	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
-	howett.net/plist v1.0.1 // indirect
 )
