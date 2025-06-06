@@ -79,10 +79,10 @@ type Block struct {
 	Align Alignment `json:"align,omitempty" conf:"align"`
 	// is urgent (result blinking)
 	Urgent bool `json:"urgent,omitempty"`
-	// put seperator after this block
-	Seperate bool `json:"separator,omitempty" conf:"seperate"`
-	// seperator width
-	SeperatorWidth int `json:"separator_block_width,omitempty" conf:"seperator-width"`
+	// put saperator after this block
+	Seperate bool `json:"separator,omitempty" conf:"separate"`
+	// separator width
+	SeperatorWidth int `json:"separator_block_width,omitempty" conf:"separator-width"`
 	// use markup
 	Markup Markup `json:"markup,omitempty" conf:"markup"`
 	// Identifier for click events
