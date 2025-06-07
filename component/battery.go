@@ -23,6 +23,30 @@ type Battery struct {
 	Rate    float64
 }
 
+func defaultBatteryName() (string, error) {
+	supplies, err := os.ReadDir("/sys/class/power_supply")
+	if err != nil {
+		return "", err
+	}
+	if len(supplies) == 0 {
+		return "", fmt.Errorf("no supplies found")
+	}
+	for _, entry := range supplies {
+		if entry.Name() == "BAT0" {
+			return entry.Name(), nil
+		}
+
+		contents, err := os.ReadFile(fmt.Sprintf("/sys/class/power_supply/%s/type", entry.Name()))
+		if err != nil {
+			return "", err
+		}
+		if strings.Contains(strings.ToLower(string(contents)), "battery") {
+			return entry.Name(), nil
+		}
+	}
+	return "", fmt.Errorf("no supplies found")
+}
+
 func GetBattery(name string) (*Battery, error) {
 	var bat Battery
 	bat.Name = name
@@ -65,7 +89,15 @@ func GetBattery(name string) (*Battery, error) {
 }
 
 func BatteryState(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	bat, err := GetBattery(args["battery"])
+	name, ok := args["battery"]
+	if !ok {
+		var err error
+		name, err = defaultBatteryName()
+		if err != nil {
+			return err
+		}
+	}
+	bat, err := GetBattery(name)
 	if err != nil {
 		return fmt.Errorf("unable to read battery status: %w", err)
 	}
@@ -76,7 +108,15 @@ func BatteryState(block *Block, args map[string]string, not *notify.Notification
 }
 
 func BatteryPercentage(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	bat, err := GetBattery(args["battery"])
+	name, ok := args["battery"]
+	if !ok {
+		var err error
+		name, err = defaultBatteryName()
+		if err != nil {
+			return err
+		}
+	}
+	bat, err := GetBattery(name)
 	if err != nil {
 		return fmt.Errorf("unable to read battery status: %w", err)
 	}
@@ -87,7 +127,15 @@ func BatteryPercentage(block *Block, args map[string]string, not *notify.Notific
 }
 
 func BatteryRemaining(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	bat, err := GetBattery(args["battery"])
+	name, ok := args["battery"]
+	if !ok {
+		var err error
+		name, err = defaultBatteryName()
+		if err != nil {
+			return err
+		}
+	}
+	bat, err := GetBattery(name)
 	if err != nil {
 		return fmt.Errorf("unable to read battery status: %w", err)
 	}
