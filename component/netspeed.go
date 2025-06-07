@@ -2,6 +2,7 @@ package component
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -44,8 +45,12 @@ func netspeedRx(args map[string]string, events *EventHandlers) (Component, error
 	var recv uint64
 	var lastTime time.Time
 
+	iface, ok := args["interface"]
+	if !ok {
+		return nil, fmt.Errorf("missing argument: interface")
+	}
 	return func(block *Block, not *notify.Notification) error {
-		rx, err := getStat(args["interface"], 1)
+		rx, err := getStat(iface, 1)
 		if err != nil {
 			return err
 		}
@@ -69,8 +74,12 @@ func netspeedTx(args map[string]string, events *EventHandlers) (Component, error
 	var sent uint64
 	var lastTime time.Time
 
+	iface, ok := args["interface"]
+	if !ok {
+		return nil, fmt.Errorf("missing argument: interface")
+	}
 	return func(block *Block, not *notify.Notification) error {
-		tx, err := getStat(args["interface"], 9)
+		tx, err := getStat(iface, 9)
 		if err != nil {
 			return err
 		}

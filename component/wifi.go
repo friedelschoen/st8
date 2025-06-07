@@ -8,13 +8,13 @@ import (
 )
 
 func WifiESSID(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
-		client, err := wifi.New()
-		if err != nil {
-			return fmt.Errorf("failed to open netlink: %w", err)
-		}
-		defer client.Close()
+	client, err := wifi.New()
+	if err != nil {
+		return nil, fmt.Errorf("failed to open netlink: %w", err)
+	}
+	defer client.Close()
 
+	return func(block *Block, not *notify.Notification) error {
 		interfaces, err := client.Interfaces()
 		if err != nil {
 			return fmt.Errorf("failed to list interfaces: %w", err)
@@ -41,13 +41,13 @@ func WifiESSID(args map[string]string, events *EventHandlers) (Component, error)
 }
 
 func WifiPerc(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
-		client, err := wifi.New()
-		if err != nil {
-			return fmt.Errorf("failed to open netlink: %w", err)
-		}
-		defer client.Close()
+	client, err := wifi.New()
+	if err != nil {
+		return nil, fmt.Errorf("failed to open netlink: %w", err)
+	}
+	defer client.Close()
 
+	return func(block *Block, not *notify.Notification) error {
 		interfaces, err := client.Interfaces()
 		if err != nil {
 			return fmt.Errorf("failed to list interfaces: %w", err)

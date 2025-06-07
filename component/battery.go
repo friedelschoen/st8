@@ -89,15 +89,15 @@ func getBattery(name string) (*battery, error) {
 }
 
 func batteryState(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
-		name, ok := args["battery"]
-		if !ok {
-			var err error
-			name, err = defaultBatteryName()
-			if err != nil {
-				return err
-			}
+	name, ok := args["battery"]
+	if !ok {
+		var err error
+		name, err = defaultBatteryName()
+		if err != nil {
+			return nil, err
 		}
+	}
+	return func(block *Block, not *notify.Notification) error {
 		bat, err := getBattery(name)
 		if err != nil {
 			return fmt.Errorf("unable to read battery status: %w", err)
@@ -110,15 +110,15 @@ func batteryState(args map[string]string, events *EventHandlers) (Component, err
 }
 
 func batteryPercentage(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
-		name, ok := args["battery"]
-		if !ok {
-			var err error
-			name, err = defaultBatteryName()
-			if err != nil {
-				return err
-			}
+	name, ok := args["battery"]
+	if !ok {
+		var err error
+		name, err = defaultBatteryName()
+		if err != nil {
+			return nil, err
 		}
+	}
+	return func(block *Block, not *notify.Notification) error {
 		bat, err := getBattery(name)
 		if err != nil {
 			return fmt.Errorf("unable to read battery status: %w", err)
@@ -131,15 +131,15 @@ func batteryPercentage(args map[string]string, events *EventHandlers) (Component
 }
 
 func batteryRemaining(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
-		name, ok := args["battery"]
-		if !ok {
-			var err error
-			name, err = defaultBatteryName()
-			if err != nil {
-				return err
-			}
+	name, ok := args["battery"]
+	if !ok {
+		var err error
+		name, err = defaultBatteryName()
+		if err != nil {
+			return nil, err
 		}
+	}
+	return func(block *Block, not *notify.Notification) error {
 		bat, err := getBattery(name)
 		if err != nil {
 			return fmt.Errorf("unable to read battery status: %w", err)

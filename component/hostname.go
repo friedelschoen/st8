@@ -7,9 +7,9 @@ import (
 )
 
 func hostname(args map[string]string, events *EventHandlers) (Component, error) {
+	host, err := os.Hostname()
 	return func(block *Block, not *notify.Notification) error {
-		var err error
-		block.Text, err = os.Hostname()
+		block.Text = host
 		return err
 	}, nil
 }

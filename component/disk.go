@@ -8,9 +8,13 @@ import (
 )
 
 func diskFree(args map[string]string, events *EventHandlers) (Component, error) {
+	path, ok := args["path"]
+	if !ok {
+		return nil, fmt.Errorf("missing argument: path")
+	}
 	return func(block *Block, not *notify.Notification) error {
 		var stat unix.Statfs_t
-		if err := unix.Statfs(args["path"], &stat); err != nil {
+		if err := unix.Statfs(path, &stat); err != nil {
 			return err
 		}
 

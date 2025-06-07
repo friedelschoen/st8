@@ -18,8 +18,12 @@ const (
 )
 
 func temperature(args map[string]string, events *EventHandlers) (Component, error) {
-	unit := TempCelsius
+	sensor, ok := args["sensor"]
+	if !ok {
+		return nil, fmt.Errorf("missing argument: sensor")
+	}
 
+	unit := TempCelsius
 	events.OnClick = func(evt ClickEvent) {
 		switch unit {
 		case TempCelsius:
@@ -32,7 +36,7 @@ func temperature(args map[string]string, events *EventHandlers) (Component, erro
 	}
 
 	return func(block *Block, not *notify.Notification) error {
-		content, err := os.ReadFile(fmt.Sprintf("/sys/class/thermal/%s/temp", args["sensor"]))
+		content, err := os.ReadFile(fmt.Sprintf("/sys/class/thermal/%s/temp", sensor))
 		if err != nil {
 			return err
 		}

@@ -42,8 +42,12 @@ func getIPAddrs(ifaceName string) (ipv4s []string, ipv6s []string, err error) {
 }
 
 func ipv4(args map[string]string, events *EventHandlers) (Component, error) {
+	iface, ok := args["interface"]
+	if !ok {
+		return nil, fmt.Errorf("missing argument: interface")
+	}
 	return func(block *Block, not *notify.Notification) error {
-		ipv4s, _, err := getIPAddrs(args["interface"])
+		ipv4s, _, err := getIPAddrs(iface)
 		if err != nil {
 			return err
 		}
@@ -53,8 +57,12 @@ func ipv4(args map[string]string, events *EventHandlers) (Component, error) {
 }
 
 func ipv6(args map[string]string, events *EventHandlers) (Component, error) {
+	iface, ok := args["interface"]
+	if !ok {
+		return nil, fmt.Errorf("missing argument: interface")
+	}
 	return func(block *Block, not *notify.Notification) error {
-		_, ipv6s, err := getIPAddrs(args["interface"])
+		_, ipv6s, err := getIPAddrs(iface)
 		if err != nil {
 			return err
 		}
@@ -64,8 +72,12 @@ func ipv6(args map[string]string, events *EventHandlers) (Component, error) {
 }
 
 func up(args map[string]string, events *EventHandlers) (Component, error) {
+	iface, ok := args["interface"]
+	if !ok {
+		return nil, fmt.Errorf("missing argument: interface")
+	}
 	return func(block *Block, not *notify.Notification) error {
-		netIface, err := net.InterfaceByName(args["interface"])
+		netIface, err := net.InterfaceByName(iface)
 		if err != nil {
 			return fmt.Errorf("interface not found: %w", err)
 		}
