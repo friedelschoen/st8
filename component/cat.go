@@ -7,10 +7,14 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func ReadFile(args map[string]string, events *EventHandlers) (Component, error) {
+func readFile(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		content, err := os.ReadFile(args["file"])
 		block.Text = strings.TrimSpace(string(content))
 		return err
 	}, nil
+}
+
+func init() {
+	Install("cat", readFile)
 }

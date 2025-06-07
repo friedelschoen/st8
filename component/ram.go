@@ -42,7 +42,7 @@ func getMem(key string) (uint64, error) {
 	return 0, scanner.Err()
 }
 
-func RamFree(args map[string]string, events *EventHandlers) (Component, error) {
+func ramFree(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		avail, err := getMem("MemAvailable")
 		if err != nil {
@@ -53,7 +53,7 @@ func RamFree(args map[string]string, events *EventHandlers) (Component, error) {
 	}, nil
 }
 
-func RamUsed(args map[string]string, events *EventHandlers) (Component, error) {
+func ramUsed(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		avail, err := getMem("MemAvailable")
 		if err != nil {
@@ -68,7 +68,7 @@ func RamUsed(args map[string]string, events *EventHandlers) (Component, error) {
 	}, nil
 }
 
-func RamTotal(args map[string]string, events *EventHandlers) (Component, error) {
+func ramTotal(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		total, err := getMem("MemTotal")
 		if err != nil {
@@ -79,7 +79,7 @@ func RamTotal(args map[string]string, events *EventHandlers) (Component, error) 
 	}, nil
 }
 
-func RamPercentage(args map[string]string, events *EventHandlers) (Component, error) {
+func ramPercentage(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		avail, err := getMem("MemAvailable")
 		if err != nil {
@@ -92,4 +92,11 @@ func RamPercentage(args map[string]string, events *EventHandlers) (Component, er
 		block.Text = fmt.Sprintf("%.0f", 100-(float64(avail)/float64(total))*100)
 		return nil
 	}, nil
+}
+
+func init() {
+	Install("ram_free", ramFree)
+	Install("ram_perc", ramPercentage)
+	Install("ram_total", ramTotal)
+	Install("ram_used", ramUsed)
 }

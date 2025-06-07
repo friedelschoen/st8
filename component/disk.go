@@ -7,7 +7,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func DiskFree(args map[string]string, events *EventHandlers) (Component, error) {
+func diskFree(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		var stat unix.Statfs_t
 		if err := unix.Statfs(args["path"], &stat); err != nil {
@@ -19,7 +19,7 @@ func DiskFree(args map[string]string, events *EventHandlers) (Component, error) 
 	}, nil
 }
 
-func DiskUsed(args map[string]string, events *EventHandlers) (Component, error) {
+func diskUsed(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		var stat unix.Statfs_t
 		if err := unix.Statfs(args["path"], &stat); err != nil {
@@ -31,7 +31,7 @@ func DiskUsed(args map[string]string, events *EventHandlers) (Component, error) 
 	}, nil
 }
 
-func DiskTotal(args map[string]string, events *EventHandlers) (Component, error) {
+func diskTotal(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		var stat unix.Statfs_t
 		if err := unix.Statfs(args["path"], &stat); err != nil {
@@ -43,7 +43,7 @@ func DiskTotal(args map[string]string, events *EventHandlers) (Component, error)
 	}, nil
 }
 
-func DiskPercentage(args map[string]string, events *EventHandlers) (Component, error) {
+func diskPercentage(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		var stat unix.Statfs_t
 		if err := unix.Statfs(args["path"], &stat); err != nil {
@@ -53,4 +53,11 @@ func DiskPercentage(args map[string]string, events *EventHandlers) (Component, e
 		block.Text = fmt.Sprintf("%.0f", 100-(float64(stat.Bavail)/float64(stat.Blocks))*100)
 		return nil
 	}, nil
+}
+
+func init() {
+	Install("disk_free", diskFree)
+	Install("disk_perc", diskPercentage)
+	Install("disk_total", diskTotal)
+	Install("disk_used", diskUsed)
 }

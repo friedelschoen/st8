@@ -7,7 +7,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func KernelRelease(args map[string]string, events *EventHandlers) (Component, error) {
+func kernelRelease(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		var res syscall.Utsname
 		if err := syscall.Uname(&res); err != nil {
@@ -20,4 +20,8 @@ func KernelRelease(args map[string]string, events *EventHandlers) (Component, er
 		block.Text = string(bytes)
 		return nil
 	}, nil
+}
+
+func init() {
+	Install("kernel_release", kernelRelease)
 }

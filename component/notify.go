@@ -7,7 +7,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func NotifyAppName(args map[string]string, events *EventHandlers) (Component, error) {
+func notifyAppName(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		if not == nil {
 			return fmt.Errorf("cannot use notify_* in regular status")
@@ -17,7 +17,7 @@ func NotifyAppName(args map[string]string, events *EventHandlers) (Component, er
 	}, nil
 }
 
-func NotifyAppIcon(args map[string]string, events *EventHandlers) (Component, error) {
+func notifyAppIcon(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		if not == nil {
 			return fmt.Errorf("cannot use notify_* in regular status")
@@ -27,7 +27,7 @@ func NotifyAppIcon(args map[string]string, events *EventHandlers) (Component, er
 	}, nil
 }
 
-func NotifySummary(args map[string]string, events *EventHandlers) (Component, error) {
+func notifySummary(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		if not == nil {
 			return fmt.Errorf("cannot use notify_* in regular status")
@@ -37,7 +37,7 @@ func NotifySummary(args map[string]string, events *EventHandlers) (Component, er
 	}, nil
 }
 
-func NotifyBody(args map[string]string, events *EventHandlers) (Component, error) {
+func notifyBody(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		if not == nil {
 			return fmt.Errorf("cannot use notify_* in regular status")
@@ -47,7 +47,7 @@ func NotifyBody(args map[string]string, events *EventHandlers) (Component, error
 	}, nil
 }
 
-func NotifyActions(args map[string]string, events *EventHandlers) (Component, error) {
+func notifyActions(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		if not == nil {
 			return fmt.Errorf("cannot use notify_* in regular status")
@@ -55,4 +55,12 @@ func NotifyActions(args map[string]string, events *EventHandlers) (Component, er
 		block.Text = strings.Join(not.Actions, ", ")
 		return nil
 	}, nil
+}
+
+func init() {
+	Install("notify_appname", notifyAppName)
+	Install("notify_appicon", notifyAppIcon)
+	Install("notify_summary", notifySummary)
+	Install("notify_body", notifyBody)
+	Install("notify_actions", notifyActions)
 }

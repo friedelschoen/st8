@@ -118,51 +118,11 @@ func (width Width) MarshalJSON() ([]byte, error) {
 	}
 }
 
-var Functions = map[string]ComponentBuilder{
-	"counter":           Counter,
-	"battery_state":     BatteryState,
-	"battery_perc":      BatteryPercentage,
-	"battery_remaining": BatteryRemaining,
-	"cat":               ReadFile,
-	"cpu_perc":          CPUPercentage,
-	"datetime":          Datetime,
-	"disk_free":         DiskFree,
-	"disk_perc":         DiskPercentage,
-	"disk_total":        DiskTotal,
-	"disk_used":         DiskUsed,
-	"entropy":           EntropyAvailable,
-	"gid":               Gid,
-	"hostname":          Hostname,
-	"ipv4":              IPv4,
-	"ipv6":              IPv6,
-	"kernel_release":    KernelRelease,
-	"load_avg":          LoadAverage,
-	"netspeed_rx":       NetspeedRx,
-	"netspeed_tx":       NetspeedTx,
-	"notify_appname":    NotifyAppName,
-	"notify_appicon":    NotifyAppIcon,
-	"notify_summary":    NotifySummary,
-	"notify_body":       NotifyBody,
-	"notify_actions":    NotifyActions,
-	"period_command":    PeriodCommand,
-	"num_files":         NumFiles,
-	"ram_free":          RamFree,
-	"ram_perc":          RamPercentage,
-	"ram_total":         RamTotal,
-	"ram_used":          RamUsed,
-	"run_command":       RunCommand,
-	"swap_free":         SwapFree,
-	"swap_perc":         SwapPercentage,
-	"swap_total":        SwapTotal,
-	"swap_used":         SwapUsed,
-	"temp":              Temperature,
-	"uid":               Uid,
-	"up":                Up,
-	"uptime":            Uptime,
-	"username":          Username,
-	"wifi_essid":        WifiESSID,
-	"wifi_perc":         WifiPerc,
+func Install(name string, builder ComponentBuilder) {
+	Functions[name] = builder
 }
+
+var Functions = make(map[string]ComponentBuilder)
 
 // fmtHuman formats bytes to a human-readable string, e.g. "1.4 GiB"
 func fmtHuman(bytes uint64) string {

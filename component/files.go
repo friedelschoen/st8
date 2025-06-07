@@ -7,7 +7,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func NumFiles(args map[string]string, events *EventHandlers) (Component, error) {
+func numFiles(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		entries, err := os.ReadDir(args["path"])
 		if err != nil {
@@ -16,4 +16,8 @@ func NumFiles(args map[string]string, events *EventHandlers) (Component, error) 
 		block.Text = fmt.Sprintf("%d", len(entries))
 		return nil
 	}, nil
+}
+
+func init() {
+	Install("num_files", numFiles)
 }

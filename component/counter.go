@@ -6,7 +6,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func Counter(args map[string]string, events *EventHandlers) (Component, error) {
+func counter(args map[string]string, events *EventHandlers) (Component, error) {
 	count := 0
 
 	events.OnClick = func(ClickEvent) {
@@ -17,4 +17,8 @@ func Counter(args map[string]string, events *EventHandlers) (Component, error) {
 		block.Text = strconv.Itoa(count)
 		return nil
 	}, nil
+}
+
+func init() {
+	Install("counter", counter)
 }

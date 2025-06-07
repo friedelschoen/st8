@@ -17,7 +17,7 @@ const (
 	TempKelvin
 )
 
-func Temperature(args map[string]string, events *EventHandlers) (Component, error) {
+func temperature(args map[string]string, events *EventHandlers) (Component, error) {
 	unit := TempCelsius
 
 	events.OnClick = func(evt ClickEvent) {
@@ -48,4 +48,8 @@ func Temperature(args map[string]string, events *EventHandlers) (Component, erro
 		}
 		return nil
 	}, nil
+}
+
+func init() {
+	Install("temp", temperature)
 }

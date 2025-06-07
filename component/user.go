@@ -34,3 +34,9 @@ func Username(args map[string]string, events *EventHandlers) (Component, error) 
 		return nil
 	}, nil
 }
+
+func init() {
+	Install("gid", Gid)
+	Install("uid", Uid)
+	Install("username", Username)
+}

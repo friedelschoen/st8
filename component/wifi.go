@@ -85,3 +85,8 @@ func WifiPerc(args map[string]string, events *EventHandlers) (Component, error) 
 		return nil
 	}, nil
 }
+
+func init() {
+	Install("wifi_essid", WifiESSID)
+	Install("wifi_perc", WifiPerc)
+}

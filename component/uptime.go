@@ -9,7 +9,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func Uptime(args map[string]string, events *EventHandlers) (Component, error) {
+func uptime(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		contents, err := os.ReadFile("/proc/uptime")
 		if err != nil {
@@ -24,4 +24,8 @@ func Uptime(args map[string]string, events *EventHandlers) (Component, error) {
 		block.Text = time.Duration(seconds * float64(time.Second)).String()
 		return nil
 	}, nil
+}
+
+func init() {
+	Install("uptime", uptime)
 }

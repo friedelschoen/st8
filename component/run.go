@@ -11,7 +11,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func RunCommand(args map[string]string, events *EventHandlers) (Component, error) {
+func runCommand(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		var buf strings.Builder
 		cmd := exec.Command("sh", "-c", args["command"])
@@ -27,7 +27,7 @@ func RunCommand(args map[string]string, events *EventHandlers) (Component, error
 	}, nil
 }
 
-func PeriodCommand(args map[string]string, events *EventHandlers) (Component, error) {
+func periodCommand(args map[string]string, events *EventHandlers) (Component, error) {
 	var (
 		output     = "?"
 		commanderr error
@@ -68,4 +68,9 @@ func PeriodCommand(args map[string]string, events *EventHandlers) (Component, er
 		block.Text = output
 		return commanderr
 	}, nil
+}
+
+func init() {
+	Install("period_command", periodCommand)
+	Install("run_command", runCommand)
 }

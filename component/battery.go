@@ -15,7 +15,7 @@ const (
 	urgentAt = 0.15 // 15%
 )
 
-type Battery struct {
+type battery struct {
 	Name    string
 	Status  string
 	Current float64
@@ -47,8 +47,8 @@ func defaultBatteryName() (string, error) {
 	return "", fmt.Errorf("no supplies found")
 }
 
-func GetBattery(name string) (*Battery, error) {
-	var bat Battery
+func getBattery(name string) (*battery, error) {
+	var bat battery
 	bat.Name = name
 	var errs []error
 	status, err := os.ReadFile(fmt.Sprintf("/sys/class/power_supply/%s/status", name))
@@ -88,7 +88,7 @@ func GetBattery(name string) (*Battery, error) {
 	return &bat, nil
 }
 
-func BatteryState(args map[string]string, events *EventHandlers) (Component, error) {
+func batteryState(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		name, ok := args["battery"]
 		if !ok {
@@ -98,7 +98,7 @@ func BatteryState(args map[string]string, events *EventHandlers) (Component, err
 				return err
 			}
 		}
-		bat, err := GetBattery(name)
+		bat, err := getBattery(name)
 		if err != nil {
 			return fmt.Errorf("unable to read battery status: %w", err)
 		}
@@ -109,7 +109,7 @@ func BatteryState(args map[string]string, events *EventHandlers) (Component, err
 	}, nil
 }
 
-func BatteryPercentage(args map[string]string, events *EventHandlers) (Component, error) {
+func batteryPercentage(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		name, ok := args["battery"]
 		if !ok {
@@ -119,7 +119,7 @@ func BatteryPercentage(args map[string]string, events *EventHandlers) (Component
 				return err
 			}
 		}
-		bat, err := GetBattery(name)
+		bat, err := getBattery(name)
 		if err != nil {
 			return fmt.Errorf("unable to read battery status: %w", err)
 		}
@@ -130,7 +130,7 @@ func BatteryPercentage(args map[string]string, events *EventHandlers) (Component
 	}, nil
 }
 
-func BatteryRemaining(args map[string]string, events *EventHandlers) (Component, error) {
+func batteryRemaining(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		name, ok := args["battery"]
 		if !ok {
@@ -140,7 +140,7 @@ func BatteryRemaining(args map[string]string, events *EventHandlers) (Component,
 				return err
 			}
 		}
-		bat, err := GetBattery(name)
+		bat, err := getBattery(name)
 		if err != nil {
 			return fmt.Errorf("unable to read battery status: %w", err)
 		}
@@ -160,4 +160,10 @@ func BatteryRemaining(args map[string]string, events *EventHandlers) (Component,
 		block.Text = (time.Duration(hours * float64(time.Hour))).Round(time.Minute).String()
 		return nil
 	}, nil
+}
+
+func init() {
+	Install("battery_state", batteryState)
+	Install("battery_perc", batteryPercentage)
+	Install("battery_remaining", batteryRemaining)
 }

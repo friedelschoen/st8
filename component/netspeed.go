@@ -40,7 +40,7 @@ func getStat(pattern string, field int) (uint64, error) {
 	return total, scanner.Err()
 }
 
-func NetspeedRx(args map[string]string, events *EventHandlers) (Component, error) {
+func netspeedRx(args map[string]string, events *EventHandlers) (Component, error) {
 	var recv uint64
 	var lastTime time.Time
 
@@ -65,7 +65,7 @@ func NetspeedRx(args map[string]string, events *EventHandlers) (Component, error
 	}, nil
 }
 
-func NetspeedTx(args map[string]string, events *EventHandlers) (Component, error) {
+func netspeedTx(args map[string]string, events *EventHandlers) (Component, error) {
 	var sent uint64
 	var lastTime time.Time
 
@@ -88,4 +88,9 @@ func NetspeedTx(args map[string]string, events *EventHandlers) (Component, error
 		block.Text = fmtHuman(uint64(bps)) + "/s"
 		return nil
 	}, nil
+}
+
+func init() {
+	Install("netspeed_rx", netspeedRx)
+	Install("netspeed_tx", netspeedTx)
 }

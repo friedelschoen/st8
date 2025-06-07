@@ -8,7 +8,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func LoadAverage(args map[string]string, events *EventHandlers) (Component, error) {
+func loadAverage(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		contents, err := os.ReadFile("/proc/loadavg")
 		if err != nil {
@@ -33,4 +33,8 @@ func LoadAverage(args map[string]string, events *EventHandlers) (Component, erro
 			return fmt.Errorf("unable to get average load: period must be either 1, 5 or 15 (minutes)")
 		}
 	}, nil
+}
+
+func init() {
+	Install("load_avg", loadAverage)
 }

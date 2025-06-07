@@ -6,7 +6,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func SwapFree(args map[string]string, events *EventHandlers) (Component, error) {
+func swapFree(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		avail, err := getMem("SwapFree")
 		if err != nil {
@@ -17,7 +17,7 @@ func SwapFree(args map[string]string, events *EventHandlers) (Component, error) 
 	}, nil
 }
 
-func SwapUsed(args map[string]string, events *EventHandlers) (Component, error) {
+func swapUsed(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		avail, err := getMem("SwapFree")
 		if err != nil {
@@ -32,7 +32,7 @@ func SwapUsed(args map[string]string, events *EventHandlers) (Component, error) 
 	}, nil
 }
 
-func SwapTotal(args map[string]string, events *EventHandlers) (Component, error) {
+func swapTotal(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		total, err := getMem("SwapTotal")
 		if err != nil {
@@ -43,7 +43,7 @@ func SwapTotal(args map[string]string, events *EventHandlers) (Component, error)
 	}, nil
 }
 
-func SwapPercentage(args map[string]string, events *EventHandlers) (Component, error) {
+func swapPercentage(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		avail, err := getMem("SwapFree")
 		if err != nil {
@@ -56,4 +56,11 @@ func SwapPercentage(args map[string]string, events *EventHandlers) (Component, e
 		block.Text = fmt.Sprintf("%.0f", 100-(float64(avail)/float64(total))*100)
 		return nil
 	}, nil
+}
+
+func init() {
+	Install("swap_free", swapFree)
+	Install("swap_perc", swapPercentage)
+	Install("swap_total", swapTotal)
+	Install("swap_used", swapUsed)
 }

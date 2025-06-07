@@ -7,7 +7,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func EntropyAvailable(args map[string]string, events *EventHandlers) (Component, error) {
+func entropyAvailable(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		data, err := os.ReadFile("/proc/sys/kernel/random/entropy_avail")
 		if err != nil {
@@ -16,4 +16,8 @@ func EntropyAvailable(args map[string]string, events *EventHandlers) (Component,
 		block.Text = string(data)
 		return nil
 	}, nil
+}
+
+func init() {
+	Install("entropy", entropyAvailable)
 }

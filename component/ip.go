@@ -41,7 +41,7 @@ func getIPAddrs(ifaceName string) (ipv4s []string, ipv6s []string, err error) {
 	return
 }
 
-func IPv4(args map[string]string, events *EventHandlers) (Component, error) {
+func ipv4(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		ipv4s, _, err := getIPAddrs(args["interface"])
 		if err != nil {
@@ -52,7 +52,7 @@ func IPv4(args map[string]string, events *EventHandlers) (Component, error) {
 	}, nil
 }
 
-func IPv6(args map[string]string, events *EventHandlers) (Component, error) {
+func ipv6(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		_, ipv6s, err := getIPAddrs(args["interface"])
 		if err != nil {
@@ -63,7 +63,7 @@ func IPv6(args map[string]string, events *EventHandlers) (Component, error) {
 	}, nil
 }
 
-func Up(args map[string]string, events *EventHandlers) (Component, error) {
+func up(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
 		netIface, err := net.InterfaceByName(args["interface"])
 		if err != nil {
@@ -76,4 +76,10 @@ func Up(args map[string]string, events *EventHandlers) (Component, error) {
 		block.Text = "down"
 		return nil
 	}, nil
+}
+
+func init() {
+	Install("ipv4", ipv4)
+	Install("ipv6", ipv6)
+	Install("up", up)
 }

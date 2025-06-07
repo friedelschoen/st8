@@ -10,7 +10,7 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-type CPUStat struct {
+type cpustat struct {
 	CPU       string
 	User      float64
 	System    float64
@@ -24,7 +24,7 @@ type CPUStat struct {
 	GuestNice float64
 }
 
-func times() (*CPUStat, error) {
+func getcputimes() (*cpustat, error) {
 	file, err := os.Open("/proc/stat")
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func times() (*CPUStat, error) {
 		if fields[0] != "cpu" {
 			continue
 		}
-		var cpu CPUStat
+		var cpu cpustat
 		cpu.CPU = fields[0]
 		dests := []*float64{
 			&cpu.User,
@@ -59,11 +59,15 @@ func times() (*CPUStat, error) {
 	return nil, scanner.Err()
 }
 
-func CPUPercentage(args map[string]string, events *EventHandlers) (Component, error) {
-	var lastCPUTimes *CPUStat
+func totalcpu(t *cpustat) float64 {
+	return t.User + t.System + t.Idle + t.Nice + t.Iowait + t.Irq + t.Softirq + t.Steal + t.Guest + t.GuestNice
+}
+
+func cpuPercentage(args map[string]string, events *EventHandlers) (Component, error) {
+	var lastCPUTimes *cpustat
 
 	return func(block *Block, not *notify.Notification) error {
-		curTimes, err := times()
+		curTimes, err := getcputimes()
 		if err != nil || curTimes == nil {
 			return fmt.Errorf("unable to get CPU times: %w", err)
 		}
@@ -76,7 +80,7 @@ func CPUPercentage(args map[string]string, events *EventHandlers) (Component, er
 
 		curr := curTimes
 
-		totalDelta := totalCPU(curr) - totalCPU(lastCPUTimes)
+		totalDelta := totalcpu(curr) - totalcpu(lastCPUTimes)
 		idleDelta := curr.Idle - lastCPUTimes.Idle
 
 		if totalDelta <= 0 {
@@ -93,6 +97,6 @@ func CPUPercentage(args map[string]string, events *EventHandlers) (Component, er
 	}, nil
 }
 
-func totalCPU(t *CPUStat) float64 {
-	return t.User + t.System + t.Idle + t.Nice + t.Iowait + t.Irq + t.Softirq + t.Steal + t.Guest + t.GuestNice
+func init() {
+	Install("cpu_perc", cpuPercentage)
 }
