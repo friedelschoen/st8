@@ -14,15 +14,13 @@ import (
 )
 
 type ComponentCall struct {
-	Func  component.Component
-	Arg   map[string]string
-	Block component.Block
+	Func         component.Component
+	Handlers     component.EventHandlers
+	DefaultBlock component.Block
 
 	Length  int
 	Padding string
 	LeftPad bool
-
-	Cache any
 
 	Prefix, Suffix string
 }
@@ -97,12 +95,15 @@ func BuildComponents(filename string) (ComponentFormat, error) {
 	var result ComponentFormat
 	for compname, values := range parseConfig(file, filename) {
 		call := &ComponentCall{}
-		var ok bool
-		call.Func, ok = component.Functions[compname]
+		builder, ok := component.Functions[compname]
 		if !ok {
 			return nil, fmt.Errorf("unknown component: %s", compname)
 		}
-		call.Arg = values
+		var err error
+		call.Func, err = builder(values, &call.Handlers)
+		if err != nil {
+			return nil, err
+		}
 
 		if format, ok := values["format"]; ok {
 			begin := strings.IndexByte(format, '{')
@@ -131,8 +132,8 @@ func BuildComponents(filename string) (ComponentFormat, error) {
 			call.Padding = " "
 		}
 
-		call.Block.Name = compname
-		if err := UnmarshalConf(values, &call.Block); err != nil {
+		call.DefaultBlock.Name = compname
+		if err := UnmarshalConf(values, &call.DefaultBlock); err != nil {
 			return nil, err
 		}
 		result = append(result, call)

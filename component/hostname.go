@@ -6,8 +6,10 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func Hostname(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	var err error
-	block.Text, err = os.Hostname()
-	return err
+func Hostname(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		var err error
+		block.Text, err = os.Hostname()
+		return err
+	}, nil
 }

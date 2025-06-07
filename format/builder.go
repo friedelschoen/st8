@@ -25,12 +25,13 @@ func (cf ComponentFormat) Build(not *notify.Notification) ([]component.Block, er
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			result := call.Block
+			result := call.DefaultBlock
+			result.Handlers = call.Handlers
 			result.ID = incrementer
 			incrementer++
-			err := call.Func(&result, call.Arg, not, &call.Cache)
+			err := call.Func(&result, not)
 			if err != nil {
-				result = call.Block
+				result = call.DefaultBlock
 				result.Text = ErrorString
 			}
 			if call.Length != 0 && len(result.Text) < call.Length {

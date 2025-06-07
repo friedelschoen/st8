@@ -52,7 +52,9 @@ type ClickEvent struct {
 	Height int `json:"height"`
 }
 
-type EventHandler func(evt ClickEvent)
+type EventHandlers struct {
+	OnClick func(evt ClickEvent)
+}
 
 type Block struct {
 	// default text to display
@@ -87,13 +89,15 @@ type Block struct {
 	Markup Markup `json:"markup,omitempty" conf:"markup"`
 	// Identifier for click events
 	Name string `json:"name,omitempty"`
-	// Click handler
-	OnClick EventHandler `json:"-"`
 	// Idenfifier
 	ID int `json:"id"`
+	// Event Handlers
+	Handlers EventHandlers `json:"-"`
 }
 
-type Component func(block *Block, args map[string]string, not *notify.Notification, cache *any) error
+type Component func(block *Block, not *notify.Notification) error
+
+type ComponentBuilder func(args map[string]string, handler *EventHandlers) (Component, error)
 
 func (width Width) MarshalJSON() ([]byte, error) {
 	switch {
@@ -114,7 +118,7 @@ func (width Width) MarshalJSON() ([]byte, error) {
 	}
 }
 
-var Functions = map[string]Component{
+var Functions = map[string]ComponentBuilder{
 	"counter":           Counter,
 	"battery_state":     BatteryState,
 	"battery_perc":      BatteryPercentage,
@@ -172,4 +176,13 @@ func fmtHuman(bytes uint64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %ciB", float64(bytes)/float64(div), "KMGTPE"[exp])
+}
+
+// matches `text` against `pattern`, pattern may contain an asterisk to consume any string
+func globMatch(pattern, text string) bool {
+	prefix, suffix, ok := strings.Cut(pattern, "*")
+	if ok {
+		return strings.HasPrefix(text, prefix) && strings.HasSuffix(text, suffix)
+	}
+	return pattern == text
 }

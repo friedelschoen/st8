@@ -42,46 +42,54 @@ func getMem(key string) (uint64, error) {
 	return 0, scanner.Err()
 }
 
-func RamFree(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	avail, err := getMem("MemAvailable")
-	if err != nil {
-		return err
-	}
-	block.Text = fmtHuman(avail)
-	return nil
+func RamFree(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		avail, err := getMem("MemAvailable")
+		if err != nil {
+			return err
+		}
+		block.Text = fmtHuman(avail)
+		return nil
+	}, nil
 }
 
-func RamUsed(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	avail, err := getMem("MemAvailable")
-	if err != nil {
-		return err
-	}
-	total, err := getMem("MemTotal")
-	if err != nil {
-		return err
-	}
-	block.Text = fmtHuman(total - avail)
-	return nil
+func RamUsed(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		avail, err := getMem("MemAvailable")
+		if err != nil {
+			return err
+		}
+		total, err := getMem("MemTotal")
+		if err != nil {
+			return err
+		}
+		block.Text = fmtHuman(total - avail)
+		return nil
+	}, nil
 }
 
-func RamTotal(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	total, err := getMem("MemTotal")
-	if err != nil {
-		return err
-	}
-	block.Text = fmtHuman(total)
-	return nil
+func RamTotal(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		total, err := getMem("MemTotal")
+		if err != nil {
+			return err
+		}
+		block.Text = fmtHuman(total)
+		return nil
+	}, nil
 }
 
-func RamPercentage(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	avail, err := getMem("MemAvailable")
-	if err != nil {
-		return err
-	}
-	total, err := getMem("MemTotal")
-	if err != nil {
-		return err
-	}
-	block.Text = fmt.Sprintf("%.0f", 100-(float64(avail)/float64(total))*100)
-	return nil
+func RamPercentage(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		avail, err := getMem("MemAvailable")
+		if err != nil {
+			return err
+		}
+		total, err := getMem("MemTotal")
+		if err != nil {
+			return err
+		}
+		block.Text = fmt.Sprintf("%.0f", 100-(float64(avail)/float64(total))*100)
+		return nil
+	}, nil
 }

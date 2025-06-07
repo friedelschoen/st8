@@ -18,7 +18,7 @@ type SwayStatus struct {
 	enc    *json.Encoder
 	dec    *json.Decoder
 
-	handlers map[string]component.EventHandler
+	handlers map[string]component.EventHandlers
 }
 
 func init() {
@@ -27,7 +27,7 @@ func init() {
 
 func (dpy *SwayStatus) Init(update chan<- struct{}) error {
 	dpy.update = update
-	dpy.handlers = make(map[string]component.EventHandler)
+	dpy.handlers = make(map[string]component.EventHandlers)
 	dpy.enc = json.NewEncoder(os.Stdout)
 	dpy.dec = json.NewDecoder(os.Stdin)
 	hdr := swaybarproto.Header{
@@ -56,8 +56,12 @@ func (dpy *SwayStatus) eventLoop() {
 		handler, ok := dpy.handlers[fmt.Sprintf("%s-%s", evt.Name, evt.Instance)]
 		if !ok {
 			continue
+
 		}
-		handler(evt)
+		if handler.OnClick == nil {
+			continue
+		}
+		handler.OnClick(evt)
 		dpy.update <- struct{}{}
 	}
 }
@@ -71,9 +75,7 @@ func (dpy *SwayStatus) SetText(line []component.Block) error {
 	for i, block := range line {
 		body[i].Block = block
 		body[i].Instance = strconv.Itoa(i)
-		if block.OnClick != nil {
-			dpy.handlers[fmt.Sprintf("%s-%d", block.Name, i)] = block.OnClick
-		}
+		dpy.handlers[fmt.Sprintf("%s-%d", block.Name, i)] = block.Handlers
 	}
 	err := dpy.enc.Encode(body)
 	if err != nil {

@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/friedelschoen/st8/notify"
 )
@@ -23,11 +22,6 @@ type CPUStat struct {
 	Steal     float64
 	Guest     float64
 	GuestNice float64
-}
-
-type cpucache struct {
-	lastCPUTimes *CPUStat
-	lastTime     time.Time
 }
 
 func times() (*CPUStat, error) {
@@ -65,44 +59,38 @@ func times() (*CPUStat, error) {
 	return nil, scanner.Err()
 }
 
-func CPUPercentage(block *Block, args map[string]string, not *notify.Notification, cacheptr *any) error {
-	var cache cpucache
-	if *cacheptr != nil {
-		cache = (*cacheptr).(cpucache)
-	}
+func CPUPercentage(args map[string]string, events *EventHandlers) (Component, error) {
+	var lastCPUTimes *CPUStat
 
-	curTimes, err := times()
-	if err != nil || curTimes == nil {
-		return fmt.Errorf("unable to get CPU times: %w", err)
-	}
+	return func(block *Block, not *notify.Notification) error {
+		curTimes, err := times()
+		if err != nil || curTimes == nil {
+			return fmt.Errorf("unable to get CPU times: %w", err)
+		}
 
-	if cache.lastCPUTimes == nil {
-		cache.lastCPUTimes = curTimes
-		cache.lastTime = time.Now()
-		*cacheptr = cache
-		block.Text = "0"
-		return nil // first call
-	}
+		if lastCPUTimes == nil {
+			lastCPUTimes = curTimes
+			block.Text = "0"
+			return nil
+		}
 
-	last := cache.lastCPUTimes
-	curr := curTimes
+		curr := curTimes
 
-	totalDelta := totalCPU(curr) - totalCPU(last)
-	idleDelta := curr.Idle - last.Idle
+		totalDelta := totalCPU(curr) - totalCPU(lastCPUTimes)
+		idleDelta := curr.Idle - lastCPUTimes.Idle
 
-	if totalDelta <= 0 {
-		block.Text = "0"
+		if totalDelta <= 0 {
+			block.Text = "0"
+			return nil
+		}
+
+		usage := 100.0 * (1.0 - idleDelta/totalDelta)
+
+		lastCPUTimes = curTimes
+
+		block.Text = fmt.Sprintf("%.0f", usage)
 		return nil
-	}
-
-	usage := 100.0 * (1.0 - idleDelta/totalDelta)
-
-	cache.lastCPUTimes = curTimes
-	cache.lastTime = time.Now()
-	*cacheptr = cache
-
-	block.Text = fmt.Sprintf("%.0f", usage)
-	return nil
+	}, nil
 }
 
 func totalCPU(t *CPUStat) float64 {

@@ -88,70 +88,76 @@ func GetBattery(name string) (*Battery, error) {
 	return &bat, nil
 }
 
-func BatteryState(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	name, ok := args["battery"]
-	if !ok {
-		var err error
-		name, err = defaultBatteryName()
-		if err != nil {
-			return err
+func BatteryState(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		name, ok := args["battery"]
+		if !ok {
+			var err error
+			name, err = defaultBatteryName()
+			if err != nil {
+				return err
+			}
 		}
-	}
-	bat, err := GetBattery(name)
-	if err != nil {
-		return fmt.Errorf("unable to read battery status: %w", err)
-	}
-
-	block.Urgent = bat.Current/bat.Full <= urgentAt
-	block.Text = bat.Status
-	return nil
-}
-
-func BatteryPercentage(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	name, ok := args["battery"]
-	if !ok {
-		var err error
-		name, err = defaultBatteryName()
+		bat, err := GetBattery(name)
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to read battery status: %w", err)
 		}
-	}
-	bat, err := GetBattery(name)
-	if err != nil {
-		return fmt.Errorf("unable to read battery status: %w", err)
-	}
 
-	block.Urgent = bat.Current/bat.Full <= urgentAt
-	block.Text = fmt.Sprintf("%.0f%%", (bat.Current/bat.Full)*100)
-	return nil
-}
-
-func BatteryRemaining(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	name, ok := args["battery"]
-	if !ok {
-		var err error
-		name, err = defaultBatteryName()
-		if err != nil {
-			return err
-		}
-	}
-	bat, err := GetBattery(name)
-	if err != nil {
-		return fmt.Errorf("unable to read battery status: %w", err)
-	}
-
-	var hours float64
-	switch bat.Status {
-	case "Charging":
-		hours = (bat.Full - bat.Current) / bat.Rate
-	case "Discharging":
-		hours = bat.Current / bat.Rate
-	default:
-		block.Text = ""
+		block.Urgent = bat.Current/bat.Full <= urgentAt
+		block.Text = bat.Status
 		return nil
-	}
+	}, nil
+}
 
-	block.Urgent = bat.Current/bat.Full <= urgentAt
-	block.Text = (time.Duration(hours * float64(time.Hour))).Round(time.Minute).String()
-	return nil
+func BatteryPercentage(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		name, ok := args["battery"]
+		if !ok {
+			var err error
+			name, err = defaultBatteryName()
+			if err != nil {
+				return err
+			}
+		}
+		bat, err := GetBattery(name)
+		if err != nil {
+			return fmt.Errorf("unable to read battery status: %w", err)
+		}
+
+		block.Urgent = bat.Current/bat.Full <= urgentAt
+		block.Text = fmt.Sprintf("%.0f%%", (bat.Current/bat.Full)*100)
+		return nil
+	}, nil
+}
+
+func BatteryRemaining(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		name, ok := args["battery"]
+		if !ok {
+			var err error
+			name, err = defaultBatteryName()
+			if err != nil {
+				return err
+			}
+		}
+		bat, err := GetBattery(name)
+		if err != nil {
+			return fmt.Errorf("unable to read battery status: %w", err)
+		}
+
+		var hours float64
+		switch bat.Status {
+		case "Charging":
+			hours = (bat.Full - bat.Current) / bat.Rate
+		case "Discharging":
+			hours = bat.Current / bat.Rate
+		default:
+			block.Text = ""
+			return nil
+		}
+
+		block.Urgent = bat.Current/bat.Full <= urgentAt
+		block.Text = (time.Duration(hours * float64(time.Hour))).Round(time.Minute).String()
+		return nil
+	}, nil
 }

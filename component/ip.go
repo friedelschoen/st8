@@ -41,33 +41,39 @@ func getIPAddrs(ifaceName string) (ipv4s []string, ipv6s []string, err error) {
 	return
 }
 
-func IPv4(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	ipv4s, _, err := getIPAddrs(args["interface"])
-	if err != nil {
-		return err
-	}
-	block.Text = strings.Join(ipv4s, ", ")
-	return nil
-}
-
-func IPv6(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	_, ipv6s, err := getIPAddrs(args["interface"])
-	if err != nil {
-		return err
-	}
-	block.Text = strings.Join(ipv6s, ", ")
-	return nil
-}
-
-func Up(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	netIface, err := net.InterfaceByName(args["interface"])
-	if err != nil {
-		return fmt.Errorf("interface not found: %w", err)
-	}
-	if netIface.Flags&net.FlagUp != 0 {
-		block.Text = "up"
+func IPv4(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		ipv4s, _, err := getIPAddrs(args["interface"])
+		if err != nil {
+			return err
+		}
+		block.Text = strings.Join(ipv4s, ", ")
 		return nil
-	}
-	block.Text = "down"
-	return nil
+	}, nil
+}
+
+func IPv6(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		_, ipv6s, err := getIPAddrs(args["interface"])
+		if err != nil {
+			return err
+		}
+		block.Text = strings.Join(ipv6s, ", ")
+		return nil
+	}, nil
+}
+
+func Up(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		netIface, err := net.InterfaceByName(args["interface"])
+		if err != nil {
+			return fmt.Errorf("interface not found: %w", err)
+		}
+		if netIface.Flags&net.FlagUp != 0 {
+			block.Text = "up"
+			return nil
+		}
+		block.Text = "down"
+		return nil
+	}, nil
 }

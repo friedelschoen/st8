@@ -7,42 +7,50 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func DiskFree(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	var stat unix.Statfs_t
-	if err := unix.Statfs(args["path"], &stat); err != nil {
-		return err
-	}
+func DiskFree(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		var stat unix.Statfs_t
+		if err := unix.Statfs(args["path"], &stat); err != nil {
+			return err
+		}
 
-	block.Text = fmtHuman(stat.Bavail * uint64(stat.Bsize))
-	return nil
+		block.Text = fmtHuman(stat.Bavail * uint64(stat.Bsize))
+		return nil
+	}, nil
 }
 
-func DiskUsed(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	var stat unix.Statfs_t
-	if err := unix.Statfs(args["path"], &stat); err != nil {
-		return err
-	}
+func DiskUsed(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		var stat unix.Statfs_t
+		if err := unix.Statfs(args["path"], &stat); err != nil {
+			return err
+		}
 
-	block.Text = fmtHuman((stat.Blocks - stat.Bfree) * uint64(stat.Bsize))
-	return nil
+		block.Text = fmtHuman((stat.Blocks - stat.Bfree) * uint64(stat.Bsize))
+		return nil
+	}, nil
 }
 
-func DiskTotal(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	var stat unix.Statfs_t
-	if err := unix.Statfs(args["path"], &stat); err != nil {
-		return err
-	}
+func DiskTotal(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		var stat unix.Statfs_t
+		if err := unix.Statfs(args["path"], &stat); err != nil {
+			return err
+		}
 
-	block.Text = fmtHuman(stat.Bfree * uint64(stat.Bsize))
-	return nil
+		block.Text = fmtHuman(stat.Bfree * uint64(stat.Bsize))
+		return nil
+	}, nil
 }
 
-func DiskPercentage(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	var stat unix.Statfs_t
-	if err := unix.Statfs(args["path"], &stat); err != nil {
-		return err
-	}
+func DiskPercentage(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		var stat unix.Statfs_t
+		if err := unix.Statfs(args["path"], &stat); err != nil {
+			return err
+		}
 
-	block.Text = fmt.Sprintf("%.0f", 100-(float64(stat.Bavail)/float64(stat.Blocks))*100)
-	return nil
+		block.Text = fmt.Sprintf("%.0f", 100-(float64(stat.Bavail)/float64(stat.Blocks))*100)
+		return nil
+	}, nil
 }

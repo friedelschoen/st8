@@ -10,19 +10,6 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-type netstat struct {
-	recv uint64
-	time time.Time
-}
-
-func match(pattern, text string) bool {
-	prefix, suffix, ok := strings.Cut(pattern, "*")
-	if ok {
-		return strings.HasPrefix(text, prefix) && strings.HasSuffix(text, suffix)
-	}
-	return pattern == text
-}
-
 // rx-bytes: 1
 // rx-packets: 2
 // tx-bytes: 9
@@ -41,7 +28,7 @@ func getStat(pattern string, field int) (uint64, error) {
 		}
 		fields := strings.Fields(line)
 		name := strings.TrimSuffix(fields[0], ":")
-		if !match(pattern, name) {
+		if !globMatch(pattern, name) {
 			continue
 		}
 		nr, err := strconv.Atoi(fields[field])
@@ -53,48 +40,52 @@ func getStat(pattern string, field int) (uint64, error) {
 	return total, scanner.Err()
 }
 
-func NetspeedRx(block *Block, args map[string]string, not *notify.Notification, cacheptr *any) error {
-	var cache netstat
-	if *cacheptr != nil {
-		cache = (*cacheptr).(netstat)
-	}
+func NetspeedRx(args map[string]string, events *EventHandlers) (Component, error) {
+	var recv uint64
+	var lastTime time.Time
 
-	rx, err := getStat(args["interface"], 1)
-	if err != nil {
-		return err
-	}
+	return func(block *Block, not *notify.Notification) error {
+		rx, err := getStat(args["interface"], 1)
+		if err != nil {
+			return err
+		}
 
-	now := time.Now()
-	*cacheptr = netstat{rx, now}
-	if cache.recv == 0 || now.Sub(cache.time).Milliseconds() == 0 {
-		block.Text = "0 B/s"
-		return nil // skip first read
-	}
-	diff := rx - cache.recv
-	bps := uint64(time.Second * time.Duration(diff) / now.Sub(cache.time))
-	block.Text = fmtHuman(bps) + "/s"
-	return nil
+		now := time.Now()
+		if recv == 0 {
+			lastTime = now
+			recv = rx
+			block.Text = "0 B/s"
+			return nil // skip first read
+		}
+		bps := float64(rx-recv) / now.Sub(lastTime).Seconds()
+		lastTime = now
+		recv = rx
+		block.Text = fmtHuman(uint64(bps)) + "/s"
+		return nil
+	}, nil
 }
 
-func NetspeedTx(block *Block, args map[string]string, not *notify.Notification, cacheptr *any) error {
-	var cache netstat
-	if *cacheptr != nil {
-		cache = (*cacheptr).(netstat)
-	}
+func NetspeedTx(args map[string]string, events *EventHandlers) (Component, error) {
+	var sent uint64
+	var lastTime time.Time
 
-	tx, err := getStat(args["interface"], 9)
-	if err != nil {
-		return err
-	}
+	return func(block *Block, not *notify.Notification) error {
+		tx, err := getStat(args["interface"], 9)
+		if err != nil {
+			return err
+		}
 
-	now := time.Now()
-	*cacheptr = netstat{tx, now}
-	if cache.recv == 0 || now.Sub(cache.time).Milliseconds() == 0 {
-		block.Text = "0 B/s"
-		return nil // skip first read
-	}
-	diff := tx - cache.recv
-	bps := uint64(time.Second * time.Duration(diff) / now.Sub(cache.time))
-	block.Text = fmtHuman(bps) + "/s"
-	return nil
+		now := time.Now()
+		if sent == 0 {
+			lastTime = now
+			sent = tx
+			block.Text = "0 B/s"
+			return nil // skip first read
+		}
+		bps := float64(tx-sent) / now.Sub(lastTime).Seconds()
+		lastTime = now
+		sent = tx
+		block.Text = fmtHuman(uint64(bps)) + "/s"
+		return nil
+	}, nil
 }

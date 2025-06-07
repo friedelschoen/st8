@@ -11,66 +11,61 @@ import (
 	"github.com/friedelschoen/st8/notify"
 )
 
-func RunCommand(block *Block, args map[string]string, not *notify.Notification, cache *any) error {
-	var buf strings.Builder
-	cmd := exec.Command("sh", "-c", args["command"])
-	cmd.Stdin = nil
-	cmd.Stdout = &buf
-	cmd.Stderr = os.Stderr
+func RunCommand(args map[string]string, events *EventHandlers) (Component, error) {
+	return func(block *Block, not *notify.Notification) error {
+		var buf strings.Builder
+		cmd := exec.Command("sh", "-c", args["command"])
+		cmd.Stdin = nil
+		cmd.Stdout = &buf
+		cmd.Stderr = os.Stderr
 
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("unable to execute `%s`: %w", args["command"], err)
-	}
-	block.Text = strings.TrimSpace(buf.String())
-	return nil
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("unable to execute `%s`: %w", args["command"], err)
+		}
+		block.Text = strings.TrimSpace(buf.String())
+		return nil
+	}, nil
 }
 
-type commandstate struct {
-	output  string
-	err     error
-	time    time.Time
-	running bool
-	mu      sync.Mutex
-}
+func PeriodCommand(args map[string]string, events *EventHandlers) (Component, error) {
+	var (
+		output     = "?"
+		commanderr error
+		lastTime   time.Time
+		running    bool
+		mu         sync.Mutex
+	)
 
-func PeriodCommand(block *Block, args map[string]string, not *notify.Notification, cacheptr *any) error {
 	dur, err := time.ParseDuration(args["interval"])
 	if err != nil {
-		return fmt.Errorf("invalid duration `%s`: %w", args["interval"], err)
+		return nil, fmt.Errorf("invalid duration `%s`: %w", args["interval"], err)
 	}
 
-	/* commandstate pointer to avoid copying mutexes */
-	var cache *commandstate
-	if *cacheptr != nil {
-		cache = (*cacheptr).(*commandstate)
-	}
-	if cache == nil {
-		cache = new(commandstate)
-		*cacheptr = cache
-	}
-	cache.mu.Lock()
-	defer cache.mu.Unlock()
+	return func(block *Block, not *notify.Notification) error {
+		mu.Lock()
+		defer mu.Unlock()
 
-	if !cache.running && time.Since(cache.time) > dur {
-		cache.running = true
-		go func() {
-			var buf strings.Builder
-			cmd := exec.Command("sh", "-c", args["command"])
-			cmd.Stdin = nil
-			cmd.Stdout = &buf
-			cmd.Stderr = os.Stderr
+		if !running && time.Since(lastTime) > dur {
+			running = true
+			go func() {
+				var buf strings.Builder
+				cmd := exec.Command("sh", "-c", args["command"])
+				cmd.Stdin = nil
+				cmd.Stdout = &buf
+				cmd.Stderr = os.Stderr
 
-			if err := cmd.Run(); err != nil {
-				cache.err = fmt.Errorf("unable to execute `%s`: %w", args["command"], err)
-			}
-			cache.mu.Lock()
-			defer cache.mu.Unlock()
-			cache.output = strings.TrimSpace(buf.String())
-			cache.time = time.Now()
-			cache.running = false
-		}()
-	}
+				if err := cmd.Run(); err != nil {
+					commanderr = fmt.Errorf("unable to execute `%s`: %w", args["command"], err)
+				}
+				mu.Lock()
+				defer mu.Unlock()
+				output = strings.TrimSpace(buf.String())
+				lastTime = time.Now()
+				running = false
+			}()
+		}
 
-	block.Text = cache.output
-	return cache.err
+		block.Text = output
+		return commanderr
+	}, nil
 }
