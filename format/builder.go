@@ -2,7 +2,6 @@ package format
 
 import (
 	"errors"
-	"strings"
 	"sync"
 
 	"github.com/friedelschoen/st8/notify"
@@ -34,15 +33,11 @@ func (cf ComponentFormat) Build(not *notify.Notification) ([]proto.Block, error)
 				result = call.DefaultBlock
 				result.Text = ErrorString
 			}
-			if call.Length != 0 && len(result.Text) < call.Length {
-				pad := strings.Repeat(call.Padding, call.Length-len(result.Text))
-				if call.LeftPad {
-					result.Text += pad
-				} else {
-					result.Text = pad + result.Text
-				}
+			if result.Short == "" {
+				result.Short = result.Text
 			}
-			result.Text = call.Prefix + result.Text + call.Suffix
+			result.Text = call.Format.Do(result.Text)
+			result.Short = call.Format.Do(result.Short)
 
 			mu.Lock()
 			defer mu.Unlock()

@@ -15,16 +15,61 @@ import (
 	"github.com/friedelschoen/st8/proto"
 )
 
+type Format struct {
+	Length         int
+	Padding        string
+	LeftPad        bool
+	Prefix, Suffix string
+}
+
+func (format *Format) Do(text string) string {
+	if format.Length == 0 || len(text) >= format.Length {
+		return text
+	}
+	if format.Padding == "" {
+		format.Padding = " "
+	}
+	pad := strings.Repeat(format.Padding, format.Length-len(text))
+	if format.LeftPad {
+		text += pad
+	} else {
+		text = pad + text
+	}
+	return format.Prefix + text + format.Suffix
+}
+
 type ComponentCall struct {
 	Func         component.Component
 	Handlers     proto.EventHandlers
 	DefaultBlock proto.Block
 
-	Length  int
-	Padding string
-	LeftPad bool
+	Format      Format
+	ShortFormat Format
+}
 
-	Prefix, Suffix string
+func parseFormat(text string) (format Format, err error) {
+	begin := strings.IndexByte(text, '{')
+	if begin == -1 {
+		return format, fmt.Errorf("format does not contain {}: %s", text)
+	}
+	format.Prefix = text[:begin]
+	text = text[begin+1:]
+
+	end := strings.IndexByte(text, '}')
+	if end == -1 {
+		return format, fmt.Errorf("unmatched `}`: %s", text)
+	}
+	format.Suffix = text[end+1:]
+	text = text[:end]
+
+	m := componentPattern.FindStringSubmatch(text)
+	if m == nil {
+		return format, fmt.Errorf("invalid format: %s", text)
+	}
+	format.LeftPad = m[1] != ""
+	format.Padding = m[2]
+	format.Length, _ = strconv.Atoi(m[3])
+	return
 }
 
 var componentPattern = regexp.MustCompile(`^(?:(-)?([^1-9])?([0-9]+))?$`)
@@ -111,30 +156,16 @@ func BuildComponents(filename string) (ComponentFormat, error) {
 		}
 
 		if format, ok := values["format"]; ok {
-			begin := strings.IndexByte(format, '{')
-			if begin == -1 {
-				return nil, fmt.Errorf("in component `%s`: format does not contain {}: %s", compname, format)
+			call.Format, err = parseFormat(format)
+			if err != nil {
+				return nil, err
 			}
-			call.Prefix = format[:begin]
-			format = format[begin+1:]
-
-			end := strings.IndexByte(format, '}')
-			if end == -1 {
-				return nil, fmt.Errorf("in component `%s`: unmatched `}`: %s", compname, format)
-			}
-			call.Suffix = format[end+1:]
-			format = format[:end]
-
-			m := componentPattern.FindStringSubmatch(format)
-			if m == nil {
-				return nil, fmt.Errorf("in component `%s`: invalid format: %s", compname, format)
-			}
-			call.LeftPad = m[1] != ""
-			call.Padding = m[2]
-			call.Length, _ = strconv.Atoi(m[3])
 		}
-		if len(call.Padding) == 0 {
-			call.Padding = " "
+		if shortformat, ok := values["short_format"]; ok {
+			call.ShortFormat, err = parseFormat(shortformat)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		call.DefaultBlock.Name = compname
