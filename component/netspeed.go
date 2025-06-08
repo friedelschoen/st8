@@ -2,7 +2,6 @@ package component
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -47,7 +46,7 @@ func netspeedRx(args map[string]string, events *EventHandlers) (Component, error
 
 	iface, ok := args["interface"]
 	if !ok {
-		return nil, fmt.Errorf("missing argument: interface")
+		iface = "*"
 	}
 	return func(block *Block, not *notify.Notification) error {
 		rx, err := getStat(iface, 1)
@@ -76,7 +75,7 @@ func netspeedTx(args map[string]string, events *EventHandlers) (Component, error
 
 	iface, ok := args["interface"]
 	if !ok {
-		return nil, fmt.Errorf("missing argument: interface")
+		iface = "*"
 	}
 	return func(block *Block, not *notify.Notification) error {
 		tx, err := getStat(iface, 9)
