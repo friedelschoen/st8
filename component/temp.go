@@ -42,6 +42,9 @@ func temperature(args map[string]string, events *proto.EventHandlers) (Component
 			return err
 		}
 		cels1000, err := strconv.Atoi(strings.TrimSpace(string(content)))
+		if err != nil {
+			return err
+		}
 		switch unit {
 		case TempCelsius:
 			block.Text = fmt.Sprintf("%.1f °C", float64(cels1000)/1000)

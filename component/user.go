@@ -9,7 +9,7 @@ import (
 	"github.com/friedelschoen/st8/proto"
 )
 
-func Gid(args map[string]string, events *proto.EventHandlers) (Component, error) {
+func getGID(args map[string]string, events *proto.EventHandlers) (Component, error) {
 	gidtext := fmt.Sprintf("%d", os.Getgid())
 	return func(block *proto.Block, not *notify.Notification) error {
 		block.Text = gidtext
@@ -17,7 +17,7 @@ func Gid(args map[string]string, events *proto.EventHandlers) (Component, error)
 	}, nil
 }
 
-func Uid(args map[string]string, events *proto.EventHandlers) (Component, error) {
+func getUID(args map[string]string, events *proto.EventHandlers) (Component, error) {
 	uidtext := fmt.Sprintf("%d", os.Getuid())
 	return func(block *proto.Block, not *notify.Notification) error {
 		block.Text = uidtext
@@ -25,7 +25,7 @@ func Uid(args map[string]string, events *proto.EventHandlers) (Component, error)
 	}, nil
 }
 
-func Username(args map[string]string, events *proto.EventHandlers) (Component, error) {
+func username(args map[string]string, events *proto.EventHandlers) (Component, error) {
 	user, err := user.Current()
 	if err != nil {
 		return nil, fmt.Errorf("unable to determine user: %w", err)
@@ -37,7 +37,7 @@ func Username(args map[string]string, events *proto.EventHandlers) (Component, e
 }
 
 func init() {
-	Install("gid", Gid)
-	Install("uid", Uid)
-	Install("username", Username)
+	Install("gid", getGID)
+	Install("uid", getUID)
+	Install("username", username)
 }
