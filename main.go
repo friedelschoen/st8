@@ -26,6 +26,7 @@ func driverNames() string {
 var (
 	statusFile     = pflag.StringP("status", "s", "", "path to status format")
 	notifyFile     = pflag.StringP("notification", "n", "", "path to notification format")
+	verify         = pflag.Bool("verify", false, "only verify config")
 	timeout        = pflag.DurationP("notif-timeout", "N", 10*time.Second, "default timeout of a notification")
 	rotateInterval = pflag.DurationP("rotate", "r", 2500*time.Millisecond, "rotate notifications every ...")
 	updateInterval = pflag.DurationP("update", "u", time.Second, "update interval")
@@ -58,18 +59,6 @@ func main() {
 		}
 	}
 
-	drv, ok := driver.Drivers[*driverFlag]
-	if !ok {
-		fmt.Fprintf(os.Stdout, "not a valid driver: %s\n  valid drivers are: %s\n", *driverFlag, driverNames())
-	}
-	updateNow := make(chan struct{})
-	err := drv.Init(updateNow)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "unable to initialize driver: %v\n", err)
-		os.Exit(1)
-	}
-	defer drv.Close()
-
 	cStatus, err := format.BuildComponents(*statusFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error in status-config: %v\n", err)
@@ -80,6 +69,21 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error in notify-config: %v\n", err)
 		os.Exit(1)
 	}
+
+	if *verify {
+		os.Exit(0)
+	}
+
+	drv, ok := driver.Drivers[*driverFlag]
+	if !ok {
+		fmt.Fprintf(os.Stdout, "not a valid driver: %s\n  valid drivers are: %s\n", *driverFlag, driverNames())
+	}
+	updateNow := make(chan struct{})
+	if err := drv.Init(updateNow); err != nil {
+		fmt.Fprintf(os.Stderr, "unable to initialize driver: %v\n", err)
+		os.Exit(1)
+	}
+	defer drv.Close()
 
 	if *onceFlag {
 		text, err := cStatus.Build(nil)

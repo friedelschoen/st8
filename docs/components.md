@@ -140,10 +140,3 @@
 * **Arguments**: *(none)*
 * **Returns**: System uptime
 * **Reads from**: `/proc/loadavg` (first field misused as uptime)
-
-## `wifi_essid`, `wifi_perc`
-* **Arguments**: `interface`
-* **Returns**:
-  * `wifi_essid`: Connected Wi-Fi network SSID
-  * `wifi_perc`: Signal strength percentage
-* **Uses**: `github.com/mdlayher/wifi` (netlink API)
