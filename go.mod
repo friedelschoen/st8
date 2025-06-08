@@ -7,7 +7,6 @@ require (
 	github.com/mdlayher/wifi v0.5.0
 	github.com/ncruces/go-strftime v0.1.9
 	github.com/spf13/pflag v1.0.6
-	golang.org/x/sys v0.33.0
 )
 
 require (
@@ -19,4 +18,5 @@ require (
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
 )

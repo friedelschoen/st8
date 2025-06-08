@@ -2,9 +2,9 @@ package component
 
 import (
 	"fmt"
+	"syscall"
 
 	"github.com/friedelschoen/st8/notify"
-	"golang.org/x/sys/unix"
 )
 
 func diskFree(args map[string]string, events *EventHandlers) (Component, error) {
@@ -13,8 +13,8 @@ func diskFree(args map[string]string, events *EventHandlers) (Component, error) 
 		return nil, fmt.Errorf("missing argument: path")
 	}
 	return func(block *Block, not *notify.Notification) error {
-		var stat unix.Statfs_t
-		if err := unix.Statfs(path, &stat); err != nil {
+		var stat syscall.Statfs_t
+		if err := syscall.Statfs(path, &stat); err != nil {
 			return err
 		}
 
@@ -25,8 +25,8 @@ func diskFree(args map[string]string, events *EventHandlers) (Component, error) 
 
 func diskUsed(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
-		var stat unix.Statfs_t
-		if err := unix.Statfs(args["path"], &stat); err != nil {
+		var stat syscall.Statfs_t
+		if err := syscall.Statfs(args["path"], &stat); err != nil {
 			return err
 		}
 
@@ -37,8 +37,8 @@ func diskUsed(args map[string]string, events *EventHandlers) (Component, error) 
 
 func diskTotal(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
-		var stat unix.Statfs_t
-		if err := unix.Statfs(args["path"], &stat); err != nil {
+		var stat syscall.Statfs_t
+		if err := syscall.Statfs(args["path"], &stat); err != nil {
 			return err
 		}
 
@@ -49,8 +49,8 @@ func diskTotal(args map[string]string, events *EventHandlers) (Component, error)
 
 func diskPercentage(args map[string]string, events *EventHandlers) (Component, error) {
 	return func(block *Block, not *notify.Notification) error {
-		var stat unix.Statfs_t
-		if err := unix.Statfs(args["path"], &stat); err != nil {
+		var stat syscall.Statfs_t
+		if err := syscall.Statfs(args["path"], &stat); err != nil {
 			return err
 		}
 
