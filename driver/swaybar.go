@@ -8,17 +8,29 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"syscall"
 
-	"github.com/friedelschoen/st8/component"
-	"github.com/friedelschoen/st8/driver/swaybarproto"
+	"github.com/friedelschoen/st8/proto"
 )
+
+type Header struct {
+	Version        int            `json:"version"`                // The protocol version to use. Currently, this must be 1
+	ClickEvents    bool           `json:"click_events,omitempty"` // Whether to receive click event information to standard input
+	ContinueSignal syscall.Signal `json:"cont_signal,omitempty"`  // The signal that swaybar should send to continue processing
+	StopSignal     syscall.Signal `json:"stop_signal,omitempty"`  // The signal that swaybar should send to stop processing
+}
+
+type SwayBlock struct {
+	proto.Block
+	Instance string `json:"instance,omitempty"` // Secondary identifier for click events.
+}
 
 type SwayStatus struct {
 	update chan<- struct{}
 	enc    *json.Encoder
 	dec    *json.Decoder
 
-	handlers map[string]component.EventHandlers
+	handlers map[string]proto.EventHandlers
 }
 
 func init() {
@@ -27,10 +39,10 @@ func init() {
 
 func (dpy *SwayStatus) Init(update chan<- struct{}) error {
 	dpy.update = update
-	dpy.handlers = make(map[string]component.EventHandlers)
+	dpy.handlers = make(map[string]proto.EventHandlers)
 	dpy.enc = json.NewEncoder(os.Stdout)
 	dpy.dec = json.NewDecoder(os.Stdin)
-	hdr := swaybarproto.Header{
+	hdr := Header{
 		Version:     1,
 		ClickEvents: true,
 	}
@@ -47,7 +59,7 @@ func (dpy *SwayStatus) eventLoop() {
 		return
 	}
 	for {
-		var evt component.ClickEvent
+		var evt proto.ClickEvent
 		err := dpy.dec.Decode(&evt)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "unable to read event: %v", err)
@@ -70,8 +82,8 @@ func (dpy *SwayStatus) Close() error {
 	return nil
 }
 
-func (dpy *SwayStatus) SetText(line []component.Block) error {
-	body := make([]swaybarproto.SwayBlock, len(line))
+func (dpy *SwayStatus) SetText(line []proto.Block) error {
+	body := make([]SwayBlock, len(line))
 	for i, block := range line {
 		body[i].Block = block
 		body[i].Instance = strconv.Itoa(i)

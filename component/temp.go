@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/friedelschoen/st8/notify"
+	"github.com/friedelschoen/st8/proto"
 )
 
 type TempUnit int
@@ -17,14 +18,14 @@ const (
 	TempKelvin
 )
 
-func temperature(args map[string]string, events *EventHandlers) (Component, error) {
+func temperature(args map[string]string, events *proto.EventHandlers) (Component, error) {
 	sensor, ok := args["sensor"]
 	if !ok {
 		return nil, fmt.Errorf("missing argument: sensor")
 	}
 
 	unit := TempCelsius
-	events.OnClick = func(evt ClickEvent) {
+	events.OnClick = func(evt proto.ClickEvent) {
 		switch unit {
 		case TempCelsius:
 			unit = TempFahrenheit
@@ -35,7 +36,7 @@ func temperature(args map[string]string, events *EventHandlers) (Component, erro
 		}
 	}
 
-	return func(block *Block, not *notify.Notification) error {
+	return func(block *proto.Block, not *notify.Notification) error {
 		content, err := os.ReadFile(fmt.Sprintf("/sys/class/thermal/%s/temp", sensor))
 		if err != nil {
 			return err

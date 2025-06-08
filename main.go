@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/friedelschoen/st8/component"
 	"github.com/friedelschoen/st8/driver"
 	"github.com/friedelschoen/st8/format"
 	"github.com/friedelschoen/st8/notify"
+	"github.com/friedelschoen/st8/proto"
 	"github.com/spf13/pflag"
 )
 
@@ -114,7 +114,7 @@ func main() {
 	}()
 
 	var notifMu sync.Mutex
-	var notifSet [][]component.Block
+	var notifSet [][]proto.Block
 	var notifIndex int
 
 	showNotif := func() {
@@ -125,7 +125,7 @@ func main() {
 		if len(notifSet) != 1 {
 			prefix = fmt.Sprintf("(%d/%d) ", notifIndex+1, len(notifSet))
 		}
-		blocks := []component.Block{
+		blocks := []proto.Block{
 			{Text: prefix},
 		}
 		blocks = append(blocks, notifSet[notifIndex]...)
@@ -158,7 +158,7 @@ func main() {
 				nTimeout = not.Timeout
 			}
 
-			linesum := func(blocks []component.Block) int {
+			linesum := func(blocks []proto.Block) int {
 				i := 0
 				for _, blk := range blocks {
 					i += blk.ID
@@ -169,7 +169,7 @@ func main() {
 			time.AfterFunc(nTimeout, func() {
 				notifMu.Lock()
 				defer notifMu.Unlock()
-				notifSet = slices.DeleteFunc(notifSet, func(n []component.Block) bool {
+				notifSet = slices.DeleteFunc(notifSet, func(n []proto.Block) bool {
 					return linesum(n) == linesum(text)
 				})
 			})

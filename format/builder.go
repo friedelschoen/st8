@@ -5,8 +5,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/friedelschoen/st8/component"
 	"github.com/friedelschoen/st8/notify"
+	"github.com/friedelschoen/st8/proto"
 )
 
 type ComponentFormat []*ComponentCall
@@ -15,11 +15,11 @@ const ErrorString = "<error>"
 
 var incrementer = 0
 
-func (cf ComponentFormat) Build(not *notify.Notification) ([]component.Block, error) {
+func (cf ComponentFormat) Build(not *notify.Notification) ([]proto.Block, error) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var errs []error
-	results := make([]component.Block, len(cf))
+	results := make([]proto.Block, len(cf))
 
 	for i, call := range cf {
 		wg.Add(1)

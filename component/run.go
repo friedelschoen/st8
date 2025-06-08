@@ -9,14 +9,15 @@ import (
 	"time"
 
 	"github.com/friedelschoen/st8/notify"
+	"github.com/friedelschoen/st8/proto"
 )
 
-func runCommand(args map[string]string, events *EventHandlers) (Component, error) {
+func runCommand(args map[string]string, events *proto.EventHandlers) (Component, error) {
 	command, ok := args["command"]
 	if !ok {
 		return nil, fmt.Errorf("missing argument: command")
 	}
-	return func(block *Block, not *notify.Notification) error {
+	return func(block *proto.Block, not *notify.Notification) error {
 		var buf strings.Builder
 		cmd := exec.Command("sh", "-c", command)
 		cmd.Stdin = nil
@@ -31,7 +32,7 @@ func runCommand(args map[string]string, events *EventHandlers) (Component, error
 	}, nil
 }
 
-func periodCommand(args map[string]string, events *EventHandlers) (Component, error) {
+func periodCommand(args map[string]string, events *proto.EventHandlers) (Component, error) {
 	var (
 		output     = "?"
 		commanderr error
@@ -53,7 +54,7 @@ func periodCommand(args map[string]string, events *EventHandlers) (Component, er
 		return nil, fmt.Errorf("invalid duration `%s`: %w", args["interval"], err)
 	}
 
-	return func(block *Block, not *notify.Notification) error {
+	return func(block *proto.Block, not *notify.Notification) error {
 		mu.Lock()
 		defer mu.Unlock()
 

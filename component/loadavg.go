@@ -6,10 +6,11 @@ import (
 	"strings"
 
 	"github.com/friedelschoen/st8/notify"
+	"github.com/friedelschoen/st8/proto"
 )
 
-func loadAverage(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func loadAverage(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		contents, err := os.ReadFile("/proc/loadavg")
 		if err != nil {
 			return err

@@ -3,7 +3,7 @@ package driver
 import (
 	"fmt"
 
-	"github.com/friedelschoen/st8/component"
+	"github.com/friedelschoen/st8/proto"
 )
 
 type stdoutDriver struct{}
@@ -12,7 +12,7 @@ func init() {
 	Drivers["stdout"] = stdoutDriver{}
 }
 
-func (stdoutDriver) SetText(line []component.Block) error {
+func (stdoutDriver) SetText(line []proto.Block) error {
 	for i, block := range line {
 		if i > 0 {
 			fmt.Print(" | ")

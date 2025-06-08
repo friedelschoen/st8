@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/friedelschoen/st8/notify"
+	"github.com/friedelschoen/st8/proto"
 )
 
 var units = []string{"B", "kB", "MB", "GB"}
@@ -42,8 +43,8 @@ func getMem(key string) (uint64, error) {
 	return 0, scanner.Err()
 }
 
-func ramFree(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func ramFree(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		avail, err := getMem("MemAvailable")
 		if err != nil {
 			return err
@@ -53,8 +54,8 @@ func ramFree(args map[string]string, events *EventHandlers) (Component, error) {
 	}, nil
 }
 
-func ramUsed(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func ramUsed(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		avail, err := getMem("MemAvailable")
 		if err != nil {
 			return err
@@ -68,8 +69,8 @@ func ramUsed(args map[string]string, events *EventHandlers) (Component, error) {
 	}, nil
 }
 
-func ramTotal(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func ramTotal(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		total, err := getMem("MemTotal")
 		if err != nil {
 			return err
@@ -79,8 +80,8 @@ func ramTotal(args map[string]string, events *EventHandlers) (Component, error) 
 	}, nil
 }
 
-func ramPercentage(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func ramPercentage(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		avail, err := getMem("MemAvailable")
 		if err != nil {
 			return err

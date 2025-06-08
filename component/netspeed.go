@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/friedelschoen/st8/notify"
+	"github.com/friedelschoen/st8/proto"
 )
 
 // rx-bytes: 1
@@ -40,7 +41,7 @@ func getStat(pattern string, field int) (uint64, error) {
 	return total, scanner.Err()
 }
 
-func netspeedRx(args map[string]string, events *EventHandlers) (Component, error) {
+func netspeedRx(args map[string]string, events *proto.EventHandlers) (Component, error) {
 	var recv uint64
 	var lastTime time.Time
 
@@ -48,7 +49,7 @@ func netspeedRx(args map[string]string, events *EventHandlers) (Component, error
 	if !ok {
 		iface = "*"
 	}
-	return func(block *Block, not *notify.Notification) error {
+	return func(block *proto.Block, not *notify.Notification) error {
 		rx, err := getStat(iface, 1)
 		if err != nil {
 			return err
@@ -69,7 +70,7 @@ func netspeedRx(args map[string]string, events *EventHandlers) (Component, error
 	}, nil
 }
 
-func netspeedTx(args map[string]string, events *EventHandlers) (Component, error) {
+func netspeedTx(args map[string]string, events *proto.EventHandlers) (Component, error) {
 	var sent uint64
 	var lastTime time.Time
 
@@ -77,7 +78,7 @@ func netspeedTx(args map[string]string, events *EventHandlers) (Component, error
 	if !ok {
 		iface = "*"
 	}
-	return func(block *Block, not *notify.Notification) error {
+	return func(block *proto.Block, not *notify.Notification) error {
 		tx, err := getStat(iface, 9)
 		if err != nil {
 			return err

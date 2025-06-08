@@ -12,7 +12,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/friedelschoen/st8/component"
+	"github.com/friedelschoen/st8/proto"
 )
 
 type Display struct{ ptr *C.Display }
@@ -37,7 +37,7 @@ func (dpy *Display) Close() error {
 	return nil
 }
 
-func (dpy *Display) SetText(line []component.Block) error {
+func (dpy *Display) SetText(line []proto.Block) error {
 	var out strings.Builder
 	for i, block := range line {
 		if i > 0 {

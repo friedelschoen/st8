@@ -5,10 +5,11 @@ import (
 	"strings"
 
 	"github.com/friedelschoen/st8/notify"
+	"github.com/friedelschoen/st8/proto"
 )
 
-func notifyAppName(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func notifyAppName(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		if not == nil {
 			return fmt.Errorf("cannot use notify_* in regular status")
 		}
@@ -17,8 +18,8 @@ func notifyAppName(args map[string]string, events *EventHandlers) (Component, er
 	}, nil
 }
 
-func notifyAppIcon(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func notifyAppIcon(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		if not == nil {
 			return fmt.Errorf("cannot use notify_* in regular status")
 		}
@@ -27,8 +28,8 @@ func notifyAppIcon(args map[string]string, events *EventHandlers) (Component, er
 	}, nil
 }
 
-func notifySummary(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func notifySummary(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		if not == nil {
 			return fmt.Errorf("cannot use notify_* in regular status")
 		}
@@ -37,8 +38,8 @@ func notifySummary(args map[string]string, events *EventHandlers) (Component, er
 	}, nil
 }
 
-func notifyBody(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func notifyBody(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		if not == nil {
 			return fmt.Errorf("cannot use notify_* in regular status")
 		}
@@ -47,8 +48,8 @@ func notifyBody(args map[string]string, events *EventHandlers) (Component, error
 	}, nil
 }
 
-func notifyActions(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func notifyActions(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		if not == nil {
 			return fmt.Errorf("cannot use notify_* in regular status")
 		}

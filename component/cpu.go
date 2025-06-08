@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/friedelschoen/st8/notify"
+	"github.com/friedelschoen/st8/proto"
 )
 
 type cpustat struct {
@@ -63,10 +64,10 @@ func totalcpu(t *cpustat) float64 {
 	return t.User + t.System + t.Idle + t.Nice + t.Iowait + t.Irq + t.Softirq + t.Steal + t.Guest + t.GuestNice
 }
 
-func cpuPercentage(args map[string]string, events *EventHandlers) (Component, error) {
+func cpuPercentage(args map[string]string, events *proto.EventHandlers) (Component, error) {
 	var lastCPUTimes *cpustat
 
-	return func(block *Block, not *notify.Notification) error {
+	return func(block *proto.Block, not *notify.Notification) error {
 		curTimes, err := getcputimes()
 		if err != nil || curTimes == nil {
 			return fmt.Errorf("unable to get CPU times: %w", err)

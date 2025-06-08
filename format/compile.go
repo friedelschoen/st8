@@ -12,12 +12,13 @@ import (
 	"strings"
 
 	"github.com/friedelschoen/st8/component"
+	"github.com/friedelschoen/st8/proto"
 )
 
 type ComponentCall struct {
 	Func         component.Component
-	Handlers     component.EventHandlers
-	DefaultBlock component.Block
+	Handlers     proto.EventHandlers
+	DefaultBlock proto.Block
 
 	Length  int
 	Padding string

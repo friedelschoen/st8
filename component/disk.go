@@ -5,14 +5,15 @@ import (
 	"syscall"
 
 	"github.com/friedelschoen/st8/notify"
+	"github.com/friedelschoen/st8/proto"
 )
 
-func diskFree(args map[string]string, events *EventHandlers) (Component, error) {
+func diskFree(args map[string]string, events *proto.EventHandlers) (Component, error) {
 	path, ok := args["path"]
 	if !ok {
 		return nil, fmt.Errorf("missing argument: path")
 	}
-	return func(block *Block, not *notify.Notification) error {
+	return func(block *proto.Block, not *notify.Notification) error {
 		var stat syscall.Statfs_t
 		if err := syscall.Statfs(path, &stat); err != nil {
 			return err
@@ -23,8 +24,8 @@ func diskFree(args map[string]string, events *EventHandlers) (Component, error) 
 	}, nil
 }
 
-func diskUsed(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func diskUsed(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		var stat syscall.Statfs_t
 		if err := syscall.Statfs(args["path"], &stat); err != nil {
 			return err
@@ -35,8 +36,8 @@ func diskUsed(args map[string]string, events *EventHandlers) (Component, error) 
 	}, nil
 }
 
-func diskTotal(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func diskTotal(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		var stat syscall.Statfs_t
 		if err := syscall.Statfs(args["path"], &stat); err != nil {
 			return err
@@ -47,8 +48,8 @@ func diskTotal(args map[string]string, events *EventHandlers) (Component, error)
 	}, nil
 }
 
-func diskPercentage(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func diskPercentage(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		var stat syscall.Statfs_t
 		if err := syscall.Statfs(args["path"], &stat); err != nil {
 			return err

@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"github.com/friedelschoen/st8/notify"
+	"github.com/friedelschoen/st8/proto"
 )
 
-func swapFree(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func swapFree(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		avail, err := getMem("SwapFree")
 		if err != nil {
 			return err
@@ -17,8 +18,8 @@ func swapFree(args map[string]string, events *EventHandlers) (Component, error) 
 	}, nil
 }
 
-func swapUsed(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func swapUsed(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		avail, err := getMem("SwapFree")
 		if err != nil {
 			return err
@@ -32,8 +33,8 @@ func swapUsed(args map[string]string, events *EventHandlers) (Component, error) 
 	}, nil
 }
 
-func swapTotal(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func swapTotal(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		total, err := getMem("SwapTotal")
 		if err != nil {
 			return err
@@ -43,8 +44,8 @@ func swapTotal(args map[string]string, events *EventHandlers) (Component, error)
 	}, nil
 }
 
-func swapPercentage(args map[string]string, events *EventHandlers) (Component, error) {
-	return func(block *Block, not *notify.Notification) error {
+func swapPercentage(args map[string]string, events *proto.EventHandlers) (Component, error) {
+	return func(block *proto.Block, not *notify.Notification) error {
 		avail, err := getMem("SwapFree")
 		if err != nil {
 			return err

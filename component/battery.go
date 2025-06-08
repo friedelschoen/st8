@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/friedelschoen/st8/notify"
+	"github.com/friedelschoen/st8/proto"
 )
 
 const (
@@ -88,7 +89,7 @@ func getBattery(name string) (*battery, error) {
 	return &bat, nil
 }
 
-func batteryState(args map[string]string, events *EventHandlers) (Component, error) {
+func batteryState(args map[string]string, events *proto.EventHandlers) (Component, error) {
 	name, ok := args["battery"]
 	if !ok {
 		var err error
@@ -97,7 +98,7 @@ func batteryState(args map[string]string, events *EventHandlers) (Component, err
 			return nil, err
 		}
 	}
-	return func(block *Block, not *notify.Notification) error {
+	return func(block *proto.Block, not *notify.Notification) error {
 		bat, err := getBattery(name)
 		if err != nil {
 			return fmt.Errorf("unable to read battery status: %w", err)
@@ -109,7 +110,7 @@ func batteryState(args map[string]string, events *EventHandlers) (Component, err
 	}, nil
 }
 
-func batteryPercentage(args map[string]string, events *EventHandlers) (Component, error) {
+func batteryPercentage(args map[string]string, events *proto.EventHandlers) (Component, error) {
 	name, ok := args["battery"]
 	if !ok {
 		var err error
@@ -118,7 +119,7 @@ func batteryPercentage(args map[string]string, events *EventHandlers) (Component
 			return nil, err
 		}
 	}
-	return func(block *Block, not *notify.Notification) error {
+	return func(block *proto.Block, not *notify.Notification) error {
 		bat, err := getBattery(name)
 		if err != nil {
 			return fmt.Errorf("unable to read battery status: %w", err)
@@ -130,7 +131,7 @@ func batteryPercentage(args map[string]string, events *EventHandlers) (Component
 	}, nil
 }
 
-func batteryRemaining(args map[string]string, events *EventHandlers) (Component, error) {
+func batteryRemaining(args map[string]string, events *proto.EventHandlers) (Component, error) {
 	name, ok := args["battery"]
 	if !ok {
 		var err error
@@ -139,7 +140,7 @@ func batteryRemaining(args map[string]string, events *EventHandlers) (Component,
 			return nil, err
 		}
 	}
-	return func(block *Block, not *notify.Notification) error {
+	return func(block *proto.Block, not *notify.Notification) error {
 		bat, err := getBattery(name)
 		if err != nil {
 			return fmt.Errorf("unable to read battery status: %w", err)

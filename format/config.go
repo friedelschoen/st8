@@ -20,7 +20,7 @@ func UnmarshalConf(data map[string]string, out any) error {
 	}
 
 	t := v.Type()
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		field := t.Field(i)
 		tag := field.Tag.Get("conf")
 		if tag == "" {
