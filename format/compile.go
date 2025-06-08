@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"maps"
 	"os"
 	"regexp"
 	"strconv"
@@ -31,6 +32,7 @@ func parseConfig(file io.Reader, filename string) iter.Seq2[string, map[string]s
 	return func(yield func(string, map[string]string) bool) {
 		scan := bufio.NewScanner(file)
 		current := make(map[string]string)
+		var base map[string]string
 		var section string
 		var linenr int
 		for scan.Scan() {
@@ -55,12 +57,14 @@ func parseConfig(file io.Reader, filename string) iter.Seq2[string, map[string]s
 					fmt.Fprintf(os.Stderr, "%s:%d: section is empty\n", filename, linenr)
 					continue
 				}
-				if len(section) > 0 && !yield(section, current) {
+				if section == "" {
+					base = current
+				} else if !yield(section, current) {
 					return
 				}
 
 				section = newsection
-				current = make(map[string]string)
+				current = maps.Clone(base)
 				continue
 			}
 
