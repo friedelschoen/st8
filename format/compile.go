@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/friedelschoen/st8/component"
 	"github.com/friedelschoen/st8/proto"
@@ -17,8 +18,8 @@ import (
 
 type Format struct {
 	Length         int
-	Padding        string
-	LeftPad        bool
+	Padding        rune
+	Align          Alignment
 	Prefix, Suffix string
 }
 
@@ -26,16 +27,32 @@ func (format *Format) Do(text string) string {
 	if format.Length == 0 || len(text) >= format.Length {
 		return text
 	}
-	if format.Padding == "" {
-		format.Padding = " "
+	var leftPad, rightPad int
+	space := format.Length - len(text)
+	switch format.Align {
+	case AlignLeft:
+		rightPad = space
+	case AlignCenter:
+		leftPad = space / 2
+		rightPad = space / 2
+		if space%2 != 0 {
+			rightPad++
+		}
+	case AlignRight:
+		leftPad = space
 	}
-	pad := strings.Repeat(format.Padding, format.Length-len(text))
-	if format.LeftPad {
-		text += pad
-	} else {
-		text = pad + text
+	var out strings.Builder
+	out.WriteString(format.Prefix)
+	for range leftPad {
+		out.WriteRune(format.Padding)
 	}
-	return format.Prefix + text + format.Suffix
+	out.WriteString(text)
+	for range rightPad {
+		out.WriteRune(format.Padding)
+	}
+	out.WriteString(format.Suffix)
+
+	return out.String()
 }
 
 type ComponentCall struct {
@@ -46,6 +63,14 @@ type ComponentCall struct {
 	Format      Format
 	ShortFormat Format
 }
+
+type Alignment int
+
+const (
+	AlignLeft Alignment = iota
+	AlignCenter
+	AlignRight
+)
 
 func parseFormat(text string) (format Format, err error) {
 	begin := strings.IndexByte(text, '{')
@@ -66,13 +91,27 @@ func parseFormat(text string) (format Format, err error) {
 	if m == nil {
 		return format, fmt.Errorf("invalid format: %s", text)
 	}
-	format.LeftPad = m[1] != ""
-	format.Padding = m[2]
+	chr, _ := utf8.DecodeRuneInString(m[1])
+	switch chr {
+	case '-', '<':
+		format.Align = AlignLeft
+	case '^':
+		format.Align = AlignCenter
+	case '>', utf8.RuneError:
+		format.Align = AlignRight
+	}
+	chr, _ = utf8.DecodeRuneInString(m[2])
+	if chr == utf8.RuneError {
+		format.Padding = ' '
+	} else {
+		format.Padding = chr
+	}
 	format.Length, _ = strconv.Atoi(m[3])
+
 	return
 }
 
-var componentPattern = regexp.MustCompile(`^(?:(-)?([^1-9])?([0-9]+))?$`)
+var componentPattern = regexp.MustCompile(`^(?:([<^>-])?([^1-9])?([0-9]+))?$`)
 
 func parseConfig(file io.Reader, filename string) iter.Seq2[string, map[string]string] {
 	return func(yield func(string, map[string]string) bool) {
