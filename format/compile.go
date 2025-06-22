@@ -113,7 +113,7 @@ func parseFormat(text string) (format Format, err error) {
 	return
 }
 
-func parseConfig(file io.Reader, filename string) iter.Seq2[string, map[string]string] {
+func ParseConfig(file io.Reader, filename string) iter.Seq2[string, map[string]string] {
 	return func(yield func(string, map[string]string) bool) {
 		scan := bufio.NewScanner(file)
 		current := make(map[string]string)
@@ -182,7 +182,7 @@ func BuildComponents(filename string) (ComponentFormat, error) {
 	}
 	defer file.Close()
 	var result ComponentFormat
-	for compname, values := range parseConfig(file, filename) {
+	for compname, values := range ParseConfig(file, filename) {
 		call := &ComponentCall{}
 		builder, ok := component.Functions[compname]
 		if !ok {
@@ -208,7 +208,7 @@ func BuildComponents(filename string) (ComponentFormat, error) {
 		}
 
 		call.DefaultBlock.Name = compname
-		if err := UnmarshalConf(values, &call.DefaultBlock); err != nil {
+		if err := UnmarshalConf(values, "", &call.DefaultBlock); err != nil {
 			return nil, err
 		}
 		result = append(result, call)

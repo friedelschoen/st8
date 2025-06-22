@@ -6,9 +6,10 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
-func UnmarshalConf(data map[string]string, out any) error {
+func UnmarshalConf(data map[string]string, prefix string, out any) error {
 	v := reflect.ValueOf(out)
 	if v.Kind() != reflect.Ptr || v.IsNil() {
 		return errors.New("output must be a non-nil pointer to a struct")
@@ -26,6 +27,13 @@ func UnmarshalConf(data map[string]string, out any) error {
 		if tag == "" {
 			continue
 		}
+		if prefix != "" {
+			var ok bool
+			tag, ok = strings.CutPrefix(tag, prefix+".")
+			if !ok {
+				continue
+			}
+		}
 
 		valStr, ok := data[tag]
 		if !ok {
@@ -37,17 +45,17 @@ func UnmarshalConf(data map[string]string, out any) error {
 			continue
 		}
 
-		// Custom method support: UnmarshalConf(string) error
-		method := fv.Addr().MethodByName("UnmarshalConf")
-		if method.IsValid() {
-			res := method.Call([]reflect.Value{reflect.ValueOf(valStr)})
-			if errVal := res[0]; !errVal.IsNil() {
-				return fmt.Errorf("error unmarshalling %q: %w", tag, errVal.Interface().(error))
+		// Handle time.Duration explicitly
+		if field.Type == reflect.TypeOf(time.Duration(0)) {
+			dur, err := time.ParseDuration(valStr)
+			if err != nil {
+				return fmt.Errorf("invalid duration for %q: %w", tag, err)
 			}
+			fv.Set(reflect.ValueOf(dur))
 			continue
 		}
 
-		// Parse built-in types
+		// Parse built-in kinds
 		switch fv.Kind() {
 		case reflect.String:
 			fv.SetString(valStr)

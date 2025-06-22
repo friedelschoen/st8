@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"maps"
 	"os"
 	"path"
@@ -17,25 +18,66 @@ import (
 	"github.com/spf13/pflag"
 )
 
-func driverNames() string {
-	keys := slices.Collect(maps.Keys(driver.Drivers))
+func driverNames[T any](drvs map[string]T) string {
+	keys := slices.Collect(maps.Keys(drvs))
 	slices.Sort(keys)
 	return strings.Join(keys, ", ")
 }
 
+func defaultConfigPath() string {
+	confdir, err := os.UserConfigDir()
+	if err != nil {
+		homedir, err := os.UserHomeDir()
+		if err != nil {
+			homedir = "/root"
+		}
+		confdir = path.Join(homedir, ".config")
+	}
+	return path.Join(confdir, "st8")
+}
+
 var (
-	statusFile     = pflag.StringP("status", "s", "", "path to status format")
-	notifyFile     = pflag.StringP("notification", "n", "", "path to notification format")
-	verify         = pflag.Bool("verify", false, "only verify config")
-	timeout        = pflag.DurationP("notif-timeout", "N", 10*time.Second, "default timeout of a notification")
-	rotateInterval = pflag.DurationP("rotate", "r", 2500*time.Millisecond, "rotate notifications every ...")
-	updateInterval = pflag.DurationP("update", "u", time.Second, "update interval")
-	driverFlag     = pflag.StringP("driver", "d", "stdout", "use driver: "+driverNames())
-	onceFlag       = pflag.BoolP("once", "1", false, "only print once (implies --print)")
-	quiet          = pflag.BoolP("quiet", "q", false, "suppress command errors")
-	helpFlag       = pflag.BoolP("help", "h", false, "show help and exit")
-	noNotify       = pflag.Bool("no-notify", false, "disable notifications")
+	configPath    = pflag.StringP("config", "c", defaultConfigPath(), "path to config-directory")
+	verify        = pflag.Bool("verify", false, "only verify config")
+	driverFlag    = pflag.StringP("output", "T", "", "output to, available drivers: "+driverNames(driver.Drivers))
+	notifiersFlag = pflag.StringP("notifier", "n", "", "enable notifiers (delimited by comma), available drivers: "+driverNames(notify.Functions))
+	onceFlag      = pflag.BoolP("once", "1", false, "only print once (implies --print)")
+	quiet         = pflag.BoolP("quiet", "q", false, "suppress command errors")
+	helpFlag      = pflag.BoolP("help", "h", false, "show help and exit")
 )
+
+type config struct {
+	Output         string        `conf:"driver.output"`
+	Notifiers      string        `conf:"driver.notifiers"`
+	StatusInterval time.Duration `conf:"status.interval"`
+	NotifyTimeout  time.Duration `conf:"notification.timeout"`
+	NotifyRotate   time.Duration `conf:"notification.rotate"`
+}
+
+var defaultConf = config{
+	Output:         "stdout",
+	Notifiers:      "", /* none */
+	StatusInterval: 1 * time.Second,
+	NotifyTimeout:  5 * time.Second,
+	NotifyRotate:   1500 * time.Millisecond,
+}
+
+func parseConfig(conf *config, filename string) error {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil /* ignoring */
+	}
+	defer file.Close()
+
+	for section, values := range format.ParseConfig(file, filename) {
+		err := format.UnmarshalConf(values, section, conf)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 func main() {
 	pflag.Parse()
@@ -45,28 +87,20 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *statusFile == "" || *notifyFile == "" {
-		confdir, err := os.UserConfigDir()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "unable to determite config-dir: %v\n", err)
-			os.Exit(1)
-		}
-		if *statusFile == "" {
-			*statusFile = path.Join(confdir, "st8", "status.txt")
-		}
-		if *notifyFile == "" {
-			*notifyFile = path.Join(confdir, "st8", "notify.txt")
-		}
-	}
-
-	cStatus, err := format.BuildComponents(*statusFile)
+	conf := defaultConf
+	err := parseConfig(&conf, path.Join(*configPath, "config.ini"))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error in status-config: %v\n", err)
+		fmt.Fprintf(os.Stderr, "error in config: %v\n", err)
 		os.Exit(1)
 	}
-	cNotify, err := format.BuildComponents(*notifyFile)
+	cStatus, err := format.BuildComponents(path.Join(*configPath, "status.ini"))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error in notify-config: %v\n", err)
+		fmt.Fprintf(os.Stderr, "error in status-format: %v\n", err)
+		os.Exit(1)
+	}
+	cNotify, err := format.BuildComponents(path.Join(*configPath, "notification.ini"))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error in notification-format: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -74,9 +108,18 @@ func main() {
 		os.Exit(0)
 	}
 
-	drv, ok := driver.Drivers[*driverFlag]
+	if *driverFlag != "" {
+		conf.Output = *driverFlag
+	}
+
+	if *notifiersFlag != "" {
+		conf.Notifiers = *notifiersFlag
+	}
+
+	drv, ok := driver.Drivers[conf.Output]
 	if !ok {
-		fmt.Fprintf(os.Stdout, "not a valid driver: %s\n  valid drivers are: %s\n", *driverFlag, driverNames())
+		fmt.Fprintf(os.Stdout, "not a valid driver: %s\n  valid drivers are: %s\n", conf.Output, driverNames(driver.Drivers))
+		os.Exit(0)
 	}
 	updateNow := make(chan struct{})
 	if err := drv.Init(updateNow); err != nil {
@@ -98,17 +141,27 @@ func main() {
 	}
 
 	notifyChannel := make(chan notify.Notification)
-	var notifier *notify.NotificationDaemon
-
-	if !*noNotify {
-		notifier, err = notify.NotifyStart(notifyChannel)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "unable to start daemon: %v", err)
+	var notifyClosers []io.Closer
+	for drvname := range strings.SplitSeq(conf.Notifiers, ",") {
+		drvname = strings.TrimSpace(drvname)
+		if drvname == "" {
+			continue
+		}
+		daemon, ok := notify.Functions[drvname]
+		if !ok {
+			fmt.Fprintf(os.Stdout, "not a valid driver: %s\n  valid drivers are: %s\n", drvname, driverNames(notify.Functions))
 			os.Exit(1)
 		}
+		closer, err := daemon(notifyChannel)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "unable to initialize driver: %v\n", err)
+			os.Exit(1)
+		}
+		notifyClosers = append(notifyClosers, closer)
 	}
+
 	defer func() {
-		if notifier != nil {
+		for _, notifier := range notifyClosers {
 			notifier.Close()
 		}
 	}()
@@ -116,7 +169,6 @@ func main() {
 	var notifMu sync.Mutex
 	var notifSet [][]proto.Block
 	var notifIndex int
-
 	showNotif := func() {
 		if len(notifSet) == 0 {
 			return
@@ -134,10 +186,10 @@ func main() {
 		}
 	}
 
-	updateTicker := time.NewTicker(*updateInterval)
+	updateTicker := time.NewTicker(conf.StatusInterval)
 	defer updateTicker.Stop()
 
-	rotateTicker := time.NewTicker(*rotateInterval)
+	rotateTicker := time.NewTicker(conf.NotifyRotate)
 	defer rotateTicker.Stop()
 
 	for {
@@ -153,7 +205,7 @@ func main() {
 			showNotif()
 			notifMu.Unlock()
 
-			nTimeout := *timeout
+			nTimeout := conf.NotifyTimeout
 			if not.Timeout != 0 {
 				nTimeout = not.Timeout
 			}
