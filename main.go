@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/friedelschoen/st8/component"
 	"github.com/friedelschoen/st8/config"
 	"github.com/friedelschoen/st8/driver"
 	"github.com/friedelschoen/st8/format"
@@ -42,7 +43,7 @@ var (
 	verify        = pflag.Bool("verify", false, "only verify config")
 	driverFlag    = pflag.StringP("output", "T", "", "output to, available drivers: "+driverNames(driver.Drivers))
 	notifiersFlag = pflag.StringP("notifier", "n", "", "enable notifiers (delimited by comma), available drivers: "+driverNames(notify.Functions))
-	onceFlag      = pflag.BoolP("once", "1", false, "only print once (implies --print)")
+	onceFlag      = pflag.BoolP("once", "1", false, "only print once")
 	quiet         = pflag.BoolP("quiet", "q", false, "suppress command errors")
 	helpFlag      = pflag.BoolP("help", "h", false, "show help and exit")
 )
@@ -61,6 +62,14 @@ func parseConfig(conf *config.MainConfig, filename string) error {
 		}
 	}
 
+	return nil
+}
+
+func procHooks() error {
+	hookdir, _ := os.ReadDir(path.Join(*configPath, "hooks"))
+	for _, entry := range hookdir {
+		component.Install(entry.Name(), component.HookComponent(path.Join(*configPath, "hooks", entry.Name())))
+	}
 	return nil
 }
 
@@ -86,6 +95,12 @@ func main() {
 	cNotify, err := format.BuildComponents(path.Join(*configPath, "notification.ini"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error in notification-format: %v\n", err)
+		os.Exit(1)
+	}
+
+	err = procHooks()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
