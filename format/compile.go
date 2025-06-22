@@ -24,8 +24,8 @@ type Format struct {
 }
 
 func (format *Format) Do(text string) string {
-	if format.Length == 0 || len(text) >= format.Length {
-		return text
+	if len(text) >= format.Length {
+		return format.Prefix + text + format.Suffix
 	}
 	var leftPad, rightPad int
 	space := format.Length - len(text)
@@ -72,6 +72,8 @@ const (
 	AlignRight
 )
 
+var componentPattern = regexp.MustCompile(`^(?:([<^>-])?([^1-9])?([0-9]+))?$`)
+
 func parseFormat(text string) (format Format, err error) {
 	begin := strings.IndexByte(text, '{')
 	if begin == -1 {
@@ -110,8 +112,6 @@ func parseFormat(text string) (format Format, err error) {
 
 	return
 }
-
-var componentPattern = regexp.MustCompile(`^(?:([<^>-])?([^1-9])?([0-9]+))?$`)
 
 func parseConfig(file io.Reader, filename string) iter.Seq2[string, map[string]string] {
 	return func(yield func(string, map[string]string) bool) {
