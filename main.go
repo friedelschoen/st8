@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/friedelschoen/st8/config"
 	"github.com/friedelschoen/st8/driver"
 	"github.com/friedelschoen/st8/format"
 	"github.com/friedelschoen/st8/notify"
@@ -46,31 +47,15 @@ var (
 	helpFlag      = pflag.BoolP("help", "h", false, "show help and exit")
 )
 
-type config struct {
-	Output         string        `conf:"driver.output"`
-	Notifiers      string        `conf:"driver.notifiers"`
-	StatusInterval time.Duration `conf:"status.interval"`
-	NotifyTimeout  time.Duration `conf:"notification.timeout"`
-	NotifyRotate   time.Duration `conf:"notification.rotate"`
-}
-
-var defaultConf = config{
-	Output:         "stdout",
-	Notifiers:      "", /* none */
-	StatusInterval: 1 * time.Second,
-	NotifyTimeout:  5 * time.Second,
-	NotifyRotate:   1500 * time.Millisecond,
-}
-
-func parseConfig(conf *config, filename string) error {
+func parseConfig(conf *config.MainConfig, filename string) error {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil /* ignoring */
 	}
 	defer file.Close()
 
-	for section, values := range format.ParseConfig(file, filename) {
-		err := format.UnmarshalConf(values, section, conf)
+	for section, values := range config.ParseConfig(file, filename) {
+		err := config.UnmarshalConf(values, section, conf)
 		if err != nil {
 			return err
 		}
@@ -87,7 +72,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	conf := defaultConf
+	conf := config.DefaultConf
 	err := parseConfig(&conf, path.Join(*configPath, "config.ini"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error in config: %v\n", err)
@@ -152,7 +137,7 @@ func main() {
 			fmt.Fprintf(os.Stdout, "not a valid driver: %s\n  valid drivers are: %s\n", drvname, driverNames(notify.Functions))
 			os.Exit(1)
 		}
-		closer, err := daemon(notifyChannel)
+		closer, err := daemon(&conf, notifyChannel)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "unable to initialize driver: %v\n", err)
 			os.Exit(1)

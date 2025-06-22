@@ -1,11 +1,7 @@
 package format
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"iter"
-	"maps"
 	"os"
 	"regexp"
 	"strconv"
@@ -13,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/friedelschoen/st8/component"
+	"github.com/friedelschoen/st8/config"
 	"github.com/friedelschoen/st8/proto"
 )
 
@@ -113,68 +110,6 @@ func parseFormat(text string) (format Format, err error) {
 	return
 }
 
-func ParseConfig(file io.Reader, filename string) iter.Seq2[string, map[string]string] {
-	return func(yield func(string, map[string]string) bool) {
-		scan := bufio.NewScanner(file)
-		current := make(map[string]string)
-		var base map[string]string
-		var section string
-		var linenr int
-		for scan.Scan() {
-			line := scan.Text()
-			linenr++
-
-			if idx := strings.IndexAny(line, ";#"); idx != -1 {
-				line = line[:idx]
-			}
-			line = strings.TrimSpace(line)
-			if len(line) == 0 {
-				continue
-			}
-
-			if line[0] == '[' {
-				end := strings.IndexByte(line, ']')
-				if end != len(line)-1 {
-					fmt.Fprintf(os.Stderr, "%s:%d: garbage found after `]`: %s\n", filename, linenr, line[end:])
-				}
-				newsection := strings.TrimSpace(line[1:end])
-				if len(newsection) == 0 {
-					fmt.Fprintf(os.Stderr, "%s:%d: section is empty\n", filename, linenr)
-					continue
-				}
-				if section == "" {
-					base = current
-				} else if !yield(section, current) {
-					return
-				}
-
-				section = newsection
-				current = maps.Clone(base)
-				continue
-			}
-
-			key, value, ok := strings.Cut(line, "=")
-			if !ok {
-				fmt.Fprintf(os.Stderr, "%s:%d: not a key-value pair: %s\n", filename, linenr, line)
-				continue
-			}
-			key = strings.TrimSpace(key)
-			if len(key) == 0 {
-				fmt.Fprintf(os.Stderr, "%s:%d: key is empty\n", filename, linenr)
-				continue
-			}
-			value = strings.TrimSpace(value)
-			if len(value) >= 2 && value[0] == '"' && value[len(value)-1] == '"' {
-				value = value[1 : len(value)-1]
-			}
-			current[key] = value
-		}
-		if len(section) > 0 {
-			yield(section, current)
-		}
-	}
-}
-
 func BuildComponents(filename string) (ComponentFormat, error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -182,7 +117,7 @@ func BuildComponents(filename string) (ComponentFormat, error) {
 	}
 	defer file.Close()
 	var result ComponentFormat
-	for compname, values := range ParseConfig(file, filename) {
+	for compname, values := range config.ParseConfig(file, filename) {
 		call := &ComponentCall{}
 		builder, ok := component.Functions[compname]
 		if !ok {
@@ -208,7 +143,7 @@ func BuildComponents(filename string) (ComponentFormat, error) {
 		}
 
 		call.DefaultBlock.Name = compname
-		if err := UnmarshalConf(values, "", &call.DefaultBlock); err != nil {
+		if err := config.UnmarshalConf(values, "", &call.DefaultBlock); err != nil {
 			return nil, err
 		}
 		result = append(result, call)

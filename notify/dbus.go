@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/friedelschoen/st8/config"
 	"github.com/godbus/dbus/v5"
 )
 
@@ -51,7 +52,7 @@ func (n *DBusDaemon) CloseNotification(id uint32) *dbus.Error {
 	return nil
 }
 
-func startDaemon(channel chan<- Notification) (io.Closer, error) {
+func startDBusDaemon(_ *config.MainConfig, channel chan<- Notification) (io.Closer, error) {
 	var conn DBusDaemon
 
 	conn.C = channel
@@ -82,5 +83,5 @@ func startDaemon(channel chan<- Notification) (io.Closer, error) {
 }
 
 func init() {
-	Install("dbus", startDaemon)
+	Install("dbus", startDBusDaemon)
 }
