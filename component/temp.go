@@ -52,7 +52,7 @@ func temperature(args map[string]string, events *proto.EventHandlers) (Component
 			// °F = (°C × 1.8) + 32
 			block.Text = fmt.Sprintf("%.1f °F", (float64(cels1000)*1.8/1000)+32)
 		case TempKelvin:
-			block.Text = fmt.Sprintf("%.1f K", (float64(cels1000)/1000)-274.15)
+			block.Text = fmt.Sprintf("%.1f K", (float64(cels1000)/1000)+274.15)
 		}
 		return nil
 	}, nil
