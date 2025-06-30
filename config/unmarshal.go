@@ -99,6 +99,19 @@ func UnmarshalConf(data map[string]string, prefix string, out any) error {
 	return nil
 }
 
+func trimComment(line string) string {
+	inQuote := false
+	for i, chr := range line {
+		if chr == '"' {
+			inQuote = !inQuote
+		}
+		if !inQuote && strings.ContainsRune(";#", chr) {
+			return line[:i]
+		}
+	}
+	return line
+}
+
 func ParseConfig(file io.Reader, filename string) iter.Seq2[string, map[string]string] {
 	return func(yield func(string, map[string]string) bool) {
 		scan := bufio.NewScanner(file)
@@ -110,10 +123,7 @@ func ParseConfig(file io.Reader, filename string) iter.Seq2[string, map[string]s
 			line := scan.Text()
 			linenr++
 
-			if idx := strings.IndexAny(line, ";#"); idx != -1 {
-				line = line[:idx]
-			}
-			line = strings.TrimSpace(line)
+			line = strings.TrimSpace(trimComment(line))
 			if len(line) == 0 {
 				continue
 			}

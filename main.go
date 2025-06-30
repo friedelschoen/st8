@@ -87,6 +87,13 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error in config: %v\n", err)
 		os.Exit(1)
 	}
+
+	err = procHooks()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
 	cStatus, err := format.BuildComponents(path.Join(*configPath, "status.ini"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error in status-format: %v\n", err)
@@ -95,12 +102,6 @@ func main() {
 	cNotify, err := format.BuildComponents(path.Join(*configPath, "notification.ini"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error in notification-format: %v\n", err)
-		os.Exit(1)
-	}
-
-	err = procHooks()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
