@@ -86,8 +86,6 @@ func (item *TrayItem) Status() (string, error) {
 	return getProp[string](item.obj, "org.kde.StatusNotifierItem", "Status")
 }
 
-func (item *TrayItem) ContextMenu(x, y int) error {
-	res := item.obj.Call("org.kde.StatusNotifierItem.ContextMenu", 0, x, y)
-	<-res.Done
-	return res.Err
+func (item *TrayItem) ContextMenu(x, y int) {
+	item.obj.Call("org.kde.StatusNotifierItem.ContextMenu", 0, x, y)
 }

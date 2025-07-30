@@ -66,15 +66,14 @@ func (dpy *SwayStatus) eventLoop() {
 			return
 		}
 		handler, ok := dpy.handlers[fmt.Sprintf("%s-%s", evt.Name, evt.Instance)]
-		if !ok {
+		if !ok || handler.OnClick == nil {
 			continue
 
 		}
-		if handler.OnClick == nil {
-			continue
-		}
-		handler.OnClick(evt)
-		dpy.update <- struct{}{}
+		go func() {
+			handler.OnClick(evt)
+			dpy.update <- struct{}{}
+		}()
 	}
 }
 
