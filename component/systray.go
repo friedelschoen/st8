@@ -1,13 +1,11 @@
 package component
 
 import (
-	"fmt"
 	"log"
-	"os/exec"
 	"strconv"
-	"strings"
 
 	"github.com/friedelschoen/st8/notify"
+	"github.com/friedelschoen/st8/popupmenu"
 	"github.com/friedelschoen/st8/proto"
 	"github.com/friedelschoen/st8/sni"
 	"github.com/godbus/dbus/v5"
@@ -29,37 +27,30 @@ func systray(args map[string]string, events *proto.EventHandlers) (Component, er
 	}
 
 	events.OnClick = func(evt proto.ClickEvent) {
-		cmd := exec.Command("xmenu")
-		in, err := cmd.StdinPipe()
-		var out strings.Builder
-		cmd.Stdout = &out
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		if err := cmd.Start(); err != nil {
-			log.Println(err)
-			return
-		}
+		var items []popupmenu.MenuItem
 		for i, item := range host.Items {
 			title, err := item.Id()
 			if err != nil {
 				log.Println(err)
 				return
 			}
-			fmt.Fprintf(in, "%s\t%d\n", title, i)
+			items = append(items, popupmenu.MenuItem{Text: title, Id: strconv.Itoa(i)})
 		}
-		in.Close()
-		if err := cmd.Wait(); err != nil {
-			log.Println(err)
-			return
-		}
-		index, err := strconv.Atoi(strings.TrimSpace(out.String()))
+		idstr, err := popupmenu.PopupMenu(items)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		host.Items[index].ContextMenu(evt.X, evt.Y)
+		id, err := strconv.Atoi(idstr)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		err = host.Items[id].ContextMenu(evt.X, evt.Y)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 	}
 
 	return func(block *proto.Block, not *notify.Notification) error {

@@ -1,7 +1,7 @@
 package sni
 
 import (
-	"fmt"
+	"log"
 	"slices"
 	"sync"
 
@@ -84,17 +84,26 @@ func (w *watcher) watchItem(service string, id string) {
 		ch := make(chan *dbus.Signal, 1)
 		w.conn.Signal(ch)
 
-		match := fmt.Sprintf("type='signal',sender='org.freedesktop.DBus',interface='org.freedesktop.DBus',member='NameOwnerChanged',arg0='%s'", service)
-		w.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0, match)
+		err := w.conn.AddMatchSignal(
+			dbus.WithMatchSender("org.freedesktop.DBus"),
+			dbus.WithMatchInterface("org.freedesktop.DBus"),
+			dbus.WithMatchMember("NameOwnerChanged"),
+			dbus.WithMatchArg(0, service))
+		if err != nil {
+			log.Printf("unable to setup watch for %s: %v", id, err)
+		}
 
 		for sig := range ch {
 			if sig.Name == "org.freedesktop.DBus.NameOwnerChanged" {
+				name := sig.Body[0].(string)
 				old := sig.Body[1].(string)
 				new := sig.Body[2].(string)
 				if old != "" && new == "" {
 					w.mu.Lock()
 					w.items = slices.DeleteFunc(w.items, func(s string) bool { return s == id })
 					w.mu.Unlock()
+
+					log.Printf("disappeared %s, name=%s, old=%s, new=%s\n", id, name, old, new)
 					w.conn.Emit(dbus.ObjectPath(watcherPath),
 						watcherInterface+".StatusNotifierItemUnregistered", id)
 					return
