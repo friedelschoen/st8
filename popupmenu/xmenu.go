@@ -15,6 +15,10 @@ type MenuItem struct {
 
 func writeMenu(in io.Writer, items []MenuItem, depth int) {
 	for _, item := range items {
+		if item.Text == "" && item.Id == "" {
+			fmt.Fprintln(in)
+			continue
+		}
 		if item.Text == "" {
 			item.Text = item.Id
 		}

@@ -67,7 +67,7 @@ func parseNode(item dbusitem) (*MenuItem, error) {
 	}
 	itemType := getProp(item.Props, "type", "")
 	if itemType == "separator" {
-		return &MenuItem{Text: "―", Id: ""}, nil
+		return &MenuItem{Text: "", Id: ""}, nil
 	}
 
 	var res MenuItem
