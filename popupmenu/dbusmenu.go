@@ -2,10 +2,10 @@ package popupmenu
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/friedelschoen/ctxmenu"
 	"github.com/godbus/dbus/v5"
 )
 
@@ -30,59 +30,81 @@ func NewDBusMenu(conn *dbus.Conn, dest string, path dbus.ObjectPath) error {
 		return fmt.Errorf("Store layout failed: %w", err)
 	}
 
-	var menu []MenuItem
+	var menu ctxmenu.Menu[int]
 	// Alleen de children, root zelf is meestal een dummy container
 	rootitem, err := parseNode(root)
 	if err != nil {
 		return fmt.Errorf("unable to create menu: %w", err)
 	}
-	if rootitem != nil {
-		menu = rootitem.Children
+	if rootitem.Label == "" {
+		menu = rootitem.SubMenu
 	}
 
-	clicked, err := PopupMenu(menu)
+	conf := ctxmenu.Config{
+		/* font, separate different fonts with comma */
+		FontName: "monospace:size=12",
+
+		/* colors */
+		BackgroundColor:    "#FFFFFF",
+		ForegroundColor:    "#2E3436",
+		SelbackgroundColor: "#3584E4",
+		SelforegroundColor: "#FFFFFF",
+		SeparatorColor:     "#CDC7C2",
+		BorderColor:        "#E6E6E6",
+
+		/* sizes in pixels */
+		MinItemWidth:    130, /* minimum width of a menu */
+		BorderSize:      1,   /* menu border */
+		SeperatorLength: 3,   /* space around separator */
+
+		/* text alignment, set to LeftAlignment, CenterAlignment or RightAlignment */
+		Alignment: ctxmenu.AlignLeft,
+
+		/*
+		 * The variables below cannot be set by X resources.
+		 * Their values must be less than .height_pixels.
+		 */
+
+		/* the icon size is equal to .height_pixels - .iconpadding * 2 */
+		IconSize: 24,
+
+		/* area around the icon, the triangle and the separator */
+		PaddingX: 4,
+		PaddingY: 4,
+	}
+	clicked, err := ctxmenu.Run(menu, conf, "", nil)
 	if err != nil {
 		return fmt.Errorf("unable to open menu: %w", err)
 	}
-	if len(clicked) == 0 {
-		return nil
-	}
-
-	clickID, err := strconv.Atoi(clicked)
-	if err != nil {
-		return fmt.Errorf("invalid id `%s`: %w", clicked, err)
-	}
 
 	stamp := time.Now().Second()
-	call = obj.Call("com.canonical.dbusmenu.Event", 0, int32(clickID), "clicked", dbus.MakeVariant(0), uint32(stamp))
+	call = obj.Call("com.canonical.dbusmenu.Event", 0, int32(clicked), "clicked", dbus.MakeVariant(0), uint32(stamp))
 	if call.Err != nil {
 		return fmt.Errorf("Event failed: %w", call.Err)
 	}
 	return nil
 }
 
-func parseNode(item dbusitem) (*MenuItem, error) {
+func parseNode(item dbusitem) (ctxmenu.Item[int], error) {
+	var res ctxmenu.Item[int]
 	if !getProp(item.Props, "visible", true) {
-		return nil, nil
+		return res, nil
 	}
 	itemType := getProp(item.Props, "type", "")
 	if itemType == "separator" {
-		return &MenuItem{Text: "", Id: ""}, nil
+		return res, nil
 	}
 
-	var res MenuItem
-	res.Id = strconv.Itoa(int(item.Id))
-	res.Text = cleanLabel(getProp(item.Props, "label", ""))
+	res.Output = int(item.Id)
+	res.Label = cleanLabel(getProp(item.Props, "label", ""))
 	// enabled := getBool(item.props, "enabled", true)
 
 	for _, child := range item.Children {
 		m, err := parseNode(child)
 		if err != nil {
-			return nil, err
+			return res, err
 		}
-		if m != nil {
-			res.Children = append(res.Children, *m)
-		}
+		res.SubMenu = append(res.SubMenu, m)
 	}
 
 	// // Disabled items worden niet opgenomen in xmenu
@@ -90,7 +112,7 @@ func parseNode(item dbusitem) (*MenuItem, error) {
 	// 	return nil, nil
 	// }
 
-	return &res, nil
+	return res, nil
 }
 
 func getProp[T any](m map[string]dbus.Variant, key string, def T) (res T) {

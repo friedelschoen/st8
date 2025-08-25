@@ -2,11 +2,10 @@ package component
 
 import (
 	"log"
-	"strconv"
 	"strings"
 
+	"github.com/friedelschoen/ctxmenu"
 	"github.com/friedelschoen/st8/notify"
-	"github.com/friedelschoen/st8/popupmenu"
 	"github.com/friedelschoen/st8/proto"
 	"github.com/friedelschoen/st8/sni"
 	"github.com/godbus/dbus/v5"
@@ -86,7 +85,40 @@ func unfilteredSystray(args map[string]string, events *proto.EventHandlers) (Com
 	remove, _ := args["remove"]
 
 	events.OnClick = func(evt proto.ClickEvent) {
-		var items []popupmenu.MenuItem
+		conf := ctxmenu.Config{
+			/* font, separate different fonts with comma */
+			FontName: "monospace:size=12",
+
+			/* colors */
+			BackgroundColor:    "#FFFFFF",
+			ForegroundColor:    "#2E3436",
+			SelbackgroundColor: "#3584E4",
+			SelforegroundColor: "#FFFFFF",
+			SeparatorColor:     "#CDC7C2",
+			BorderColor:        "#E6E6E6",
+
+			/* sizes in pixels */
+			MinItemWidth:    130, /* minimum width of a menu */
+			BorderSize:      1,   /* menu border */
+			SeperatorLength: 3,   /* space around separator */
+
+			/* text alignment, set to LeftAlignment, CenterAlignment or RightAlignment */
+			Alignment: ctxmenu.AlignLeft,
+
+			/*
+			 * The variables below cannot be set by X resources.
+			 * Their values must be less than .height_pixels.
+			 */
+
+			/* the icon size is equal to .height_pixels - .iconpadding * 2 */
+			IconSize: 24,
+
+			/* area around the icon, the triangle and the separator */
+			PaddingX: 4,
+			PaddingY: 4,
+		}
+
+		menu := ctxmenu.Menu[int]{}
 		for i, item := range host.Items {
 			if remove != "" {
 				id, err := item.Id()
@@ -110,14 +142,13 @@ func unfilteredSystray(args map[string]string, events *proto.EventHandlers) (Com
 				log.Println(err)
 				return
 			}
-			items = append(items, popupmenu.MenuItem{Text: title, Id: strconv.Itoa(i)})
+			menu = append(menu, ctxmenu.Item[int]{
+				Label:  title,
+				Output: i,
+			})
 		}
-		idstr, err := popupmenu.PopupMenu(items)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		id, err := strconv.Atoi(idstr)
+
+		id, err := ctxmenu.Run(menu, conf, "", nil)
 		if err != nil {
 			log.Println(err)
 			return
